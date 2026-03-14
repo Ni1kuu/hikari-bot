@@ -1,1 +1,1 @@
-worker: python kaoribot.py
+worker: python hikaribot.py
