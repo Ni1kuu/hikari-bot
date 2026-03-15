@@ -293,24 +293,41 @@ def image(m):
         img = random.choice(imgs)
         bot.send_photo(m.chat.id, img["original"], caption=query)
     except:
-        bot.reply_to(m, "💛 Erro ao buscar imagem.")
-
+        bot.reply_to(m, "💛 Erro ao buscar imagem 
 @bot.message_handler(commands=['play'])
-def play(m):
-    args = m.text.split(maxsplit=1)
+def play(message):
+    args = message.text.split(maxsplit=1)
     if len(args) < 2:
+        bot.reply_to(message, "💛 Use:\n/play nome da música")
         return
+
     query = args[1]
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
+
     try:
         r = requests.get(url, timeout=10).json()
-        video = r["items"][0]
+        items = r.get("items", [])
+        if not items:
+            bot.reply_to(message, "💛 Música não encontrada.")
+            return
+
+        video = items[0]
         title = video["snippet"]["title"]
         channel = video["snippet"]["channelTitle"]
-        vid = video["id"]["videoId"]
-        bot.send_message(m.chat.id, f"🎵 {title}\n📺 {channel}\nhttps://youtu.be/{vid}")
-    except:
-        bot.reply_to(m, "💛 Música não encontrada.")
+        video_id = video["id"]["videoId"]
+        link = f"https://youtu.be/{video_id}"
+
+        bot.send_message(
+            message.chat.id,
+            f"🎵 Música encontrada!\n\n"
+            f"📀 {title}\n"
+            f"📺 {channel}\n\n"
+            f"▶️ {link}"
+        )
+
+    except Exception as e:
+        print("Erro no /play:", e)
+        bot.reply_to(message, "💛 Erro ao buscar música.")
 
 # ======================
 # RANK / DAILY / COINFLIP / SALDO
@@ -378,13 +395,28 @@ def ship(m):
     user2 = m.reply_to_message.from_user.first_name
     bot.send_message(m.chat.id, f"💕 {user1} + {user2}\nCompatibilidade: {score}%")
 
+#info
+
+BOT_VERSION = "2.6.3"  # Coloque a versão do seu bot aqui
+CREATOR_USERNAME = "@ni1ckkj"  # Seu usuário do Telegram
+
 @bot.message_handler(commands=['info'])
 def info(m):
     uptime = int(time.time() - start_time)
-    h = uptime // 3600
-    m2 = (uptime % 3600) // 60
-    s = uptime % 60
-    bot.send_message(m.chat.id, f"🌻 Hikari Bot\n⏱ Uptime: {h}h {m2}m {s}s")
+    horas = uptime // 3600
+    minutos = (uptime % 3600) // 60
+    segundos = uptime % 60
+
+    msg = (
+        "╭━━━━━━━━━━━━━━━\n"
+        "🌻 INFO HIKARI 🌻\n"
+        "╰━━━━━━━━━━━━━━━\n"
+        f"🤖 Nome: HikariBot\n"
+        f"⏱ Uptime: {horas}h {minutos}m {segundos}s\n"
+        f"👤 Criador: {CREATOR_USERNAME}\n"
+        f"⚡ Versão: {BOT_VERSION}"
+    )
+    bot.send_message(m.chat.id, msg)
 
 @bot.message_handler(commands=['antilink'])
 def anti(m):
