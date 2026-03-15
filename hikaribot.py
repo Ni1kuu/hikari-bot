@@ -29,18 +29,18 @@ MENU = """╭━━ 💛🌻 MENU HIKARI 🌻💛 ━━╮
 /unpin
 
 💛 🌸 WAIFU
-/waifu – Waifu SFW
+/waifu – Waifu SFW (20 categorias)
 /waifunsfw – Waifu NSFW (privado)
 
 /🎮 DIVERSÃO
-/gif – GIF anime (opcional)
+/gif – GIF anime
 /meme
-/play
+/play – Link de música
 
 💛 🛠 UTILIDADES
 /userinfo
 /avatar
-/google
+/google – Pesquisa rápida
 
 💛 🛡 MODERAÇÃO
 /ban
@@ -57,9 +57,9 @@ def start(m):
 
 @bot.message_handler(commands=['ping'])
 def ping(m):
-    start = time.time()
+    start_time_ping = time.time()
     msg = bot.reply_to(m, "🏓 Pingando...")
-    elapsed = int((time.time() - start) * 1000)
+    elapsed = int((time.time() - start_time_ping) * 1000)
     bot.edit_message_text(f"🏓 Pong! {elapsed} ms", m.chat.id, msg.message_id)
 
 # ======================
@@ -87,15 +87,20 @@ def unpin(m):
 # ======================
 # WAIFU SFW / NSFW
 # ======================
+WAIFU_CATS = ["waifu", "neko", "shinobu", "megumin", "bully", "cuddle",
+              "cry", "hug", "awoo", "kiss", "lick", "pat", "smug",
+              "bonk", "yeet", "blush", "smile", "wave", "highfive", "handhold"]
+
 @bot.message_handler(commands=['waifu','waifunsfw'])
 def waifu(m):
     if m.text.startswith("/waifunsfw") and m.chat.type != "private":
         bot.reply_to(m, "🚫 NSFW só no privado!")
         return
-    url_api = "https://api.waifu.pics/nsfw/waifu" if m.text.startswith("/waifunsfw") else "https://api.waifu.pics/sfw/waifu"
+    categoria = random.choice(WAIFU_CATS) if m.text.startswith("/waifu") else "waifu"
+    url_api = f"https://api.waifu.pics/sfw/{categoria}" if m.text.startswith("/waifu") else f"https://api.waifu.pics/nsfw/{categoria}"
     try:
         r = requests.get(url_api).json()
-        bot.send_photo(m.chat.id, r["url"], caption="💛 Aqui está sua waifu!")
+        bot.send_photo(m.chat.id, r["url"], caption=f"💛 Aqui está sua waifu ({categoria})!")
     except:
         bot.reply_to(m, "💛 Não consegui pegar a waifu!")
 
@@ -130,7 +135,6 @@ def userinfo(m):
             return
     else:
         user = m.from_user
-
     msg = f"""╭━━━━━━━━━━━━━━━
 🌻 USERINFO 🌻
 ╰━━━━━━━━━━━━━━━
@@ -154,7 +158,6 @@ def avatar(m):
         except:
             bot.reply_to(m,"💛 Usuário não encontrado ou inválido!")
             return
-
     photos = bot.get_user_profile_photos(target_user.id)
     if photos.total_count > 0:
         bot.send_photo(m.chat.id, photos.photos[0][0].file_id, caption=f"Aqui está o avatar de {target_user.first_name} ꒰ᐢ. .ᐢ꒱₊˚⊹")
@@ -162,35 +165,30 @@ def avatar(m):
         bot.reply_to(m,"💛 Usuário não possui foto de perfil.")
 
 # ======================
-# BAN
+# BAN (funciona com @ e reply)
 # ======================
 @bot.message_handler(commands=['ban'])
 def ban(m):
-
+    user_id = None
     if m.reply_to_message:
         user_id = m.reply_to_message.from_user.id
-
     else:
         args = m.text.split()
-
         if len(args) < 2:
             bot.reply_to(m,"💛 Use:\n/ban @usuario")
             return
-
         username = args[1].replace("@","")
-
         try:
             member = bot.get_chat_member(m.chat.id, username)
             user_id = member.user.id
         except:
             bot.reply_to(m,"💛 Usuário não encontrado.")
             return
-
     try:
-        bot.ban_chat_member(m.chat.id,user_id)
+        bot.ban_chat_member(m.chat.id, user_id)
         bot.reply_to(m,"🚫 Usuário banido!")
     except:
-        bot.reply_to(m,"💛 Não consegui banir.")
+        bot.reply_to(m,"💛 Não consegui banir. Verifique se o bot é administrador.")
 
 # ======================
 # ANTILINK
@@ -216,38 +214,20 @@ def verifica_link(m):
         except: pass
 
 # ======================
-# GOOGLE (pesquisa rápida)
+# GOOGLE
 # ======================
-import urllib.parse
-
 @bot.message_handler(commands=['google'])
 def google(m):
-    try:
-        # Remove o comando e pega o texto da pesquisa
-        texto = m.text.replace("/google", "").strip()
-
-        if not texto:  # Se não tiver termo
-            bot.reply_to(m, "💛 Use: /google <termo>")
-            return
-
-        # Escapa espaços e caracteres especiais
-        termo = urllib.parse.quote_plus(texto)
-        link = f"https://www.google.com/search?q={termo}"
-
-        # Envia a mensagem com link
-        bot.send_message(
-            m.chat.id,
-            f"🔎 Pesquisa Google\n\n"
-            f"📌 Termo pesquisado: {texto}\n"
-            f"🌐 Link: {link}"
-        )
-
-    except Exception as e:
-        print("Erro no /google:", e)
-        bot.reply_to(m, "💛 Erro ao fazer a pesquisa.")
+    args = m.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(m,"💛 Use: /google <termo>")
+        return
+    termo_busca = urllib.parse.quote_plus(args[1])
+    link = f"https://www.google.com/search?q={termo_busca}"
+    bot.send_message(m.chat.id,f"🔎 Pesquisa Google\n📌 {args[1]}\n🌐 {link}")
 
 # ======================
-# MEME (pt-BR)
+# MEME
 # ======================
 @bot.message_handler(commands=['meme'])
 def meme(m):
@@ -261,39 +241,26 @@ def meme(m):
 # PLAY (YouTube)
 # ======================
 @bot.message_handler(commands=['play'])
-def play(message):
-
-    args = message.text.split(maxsplit=1)
-
+def play(m):
+    args = m.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(message,"💛 Use:\n/play nome da música")
+        bot.reply_to(m,"💛 Use: /play nome da música")
         return
-
     query = args[1]
-
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
-
-    r = requests.get(url).json()
-
-    if not r["items"]:
-        bot.reply_to(message,"💛 Música não encontrada.")
-        return
-
-    video = r["items"][0]
-
-    title = video["snippet"]["title"]
-    channel = video["snippet"]["channelTitle"]
-    video_id = video["id"]["videoId"]
-
-    link = f"https://youtu.be/{video_id}"
-
-    bot.send_message(
-        message.chat.id,
-        f"🎵 Música encontrada!\n\n"
-        f"📀 {title}\n"
-        f"📺 {channel}\n\n"
-        f"▶️ {link}"
-    )
+    try:
+        r = requests.get(url).json()
+        if not r.get("items"):
+            bot.reply_to(m,"💛 Música não encontrada.")
+            return
+        video = r["items"][0]
+        title = video["snippet"]["title"]
+        channel = video["snippet"]["channelTitle"]
+        video_id = video["id"]["videoId"]
+        link = f"https://youtu.be/{video_id}"
+        bot.send_message(m.chat.id,f"🎵 Música encontrada!\n📀 {title}\n📺 {channel}\n▶️ {link}")
+    except:
+        bot.reply_to(m,"💛 Erro ao buscar música.")
 
 # ======================
 # INFO (Uptime)
@@ -301,11 +268,9 @@ def play(message):
 @bot.message_handler(commands=['info'])
 def info(m):
     uptime = int(time.time() - start_time)
-
     horas = uptime // 3600
     minutos = (uptime % 3600) // 60
     segundos = uptime % 60
-
     msg = (
     "╭━━━━━━━━━━━━━━━\n"
     "🌻 INFO HIKARI 🌻\n"
@@ -314,61 +279,27 @@ def info(m):
     "👤 Criador: @ni1ckkj\n"
     f"⏱ Uptime: {horas}h {minutos}m {segundos}s"
     )
-
     bot.send_message(m.chat.id,msg)
-# =========================
+
+# ======================
 # CHAT AUTOMÁTICO HIKARI
-# =========================
+# ======================
 @bot.message_handler(func=lambda m: True)
 def hikari_chat(m):
-
     if not m.text:
         return
-
     texto = m.text.lower()
-
     respostas = {
-        "hikari":[
-        "Oi! Você me chamou? 🌻",
-        "Hikari está aqui! ✨",
-        "Sim? 💛"
-        ],
-
-        "bom dia":[
-        "Bom dia! ☀️",
-        "Espero que seu dia seja incrível!"
-        ],
-
-        "boa noite":[
-        "Boa noite! 🌙",
-        "Durma bem!"
-        ],
-
-        "anime":[
-        "Eu amo anime! 🌸",
-        "Anime é vida!"
-        ],
-
-        "waifu":[
-        "Você falou de waifus? 👀",
-        "Waifus são incríveis!"
-        ],
-
-        "oi":[
-        "Oi oi! 🌻",
-        "Olá!"
-        ]
+        "hikari":["Oi! Você me chamou? 🌻","Hikari está aqui! ✨","Sim? 💛"],
+        "bom dia":["Bom dia! ☀️","Espero que seu dia seja incrível!"],
+        "boa noite":["Boa noite! 🌙","Durma bem!"],
+        "anime":["Eu amo anime! 🌸","Anime é vida!"],
+        "waifu":["Você falou de waifus? 👀","Waifus são incríveis!"],
+        "oi":["Oi oi! 🌻","Olá!"]
     }
-
     for palavra in respostas:
-
         if palavra in texto:
-
-            bot.reply_to(
-                m,
-                random.choice(respostas[palavra])
-            )
-
+            bot.reply_to(m, random.choice(respostas[palavra]))
             break
 
 # ======================
