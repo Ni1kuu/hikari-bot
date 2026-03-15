@@ -69,7 +69,7 @@ Use meus comandos abaixo:
 /start • /ping • /info
 
 🎮 DIVERSÃO
-/gif • /meme • /waifu • /waifunsfw • /play
+/gif • /meme • /waifu • /waifunsfw • /play • /waifugif • /gifnsfw 
 
 🔎 PESQUISA
 /google • /image
@@ -203,16 +203,59 @@ def coinflip(m):
 # ======================
 @bot.message_handler(commands=['gif'])
 def gif(m):
-    args = m.text.split()
-    termo = "anime " + " ".join(args[1:]) if len(args) > 1 else "anime"
+
+    actions = {
+        "hug": "anime hug",
+        "kiss": "anime kiss",
+        "slap": "anime slap",
+        "pat": "anime headpat",
+        "dance": "anime dance"
+    }
+
+    args = m.text.split(maxsplit=1)
+
+    if len(args) < 2:
+        query = "anime"
+    else:
+        user_query = args[1].lower()
+
+        if user_query in actions:
+            query = actions[user_query]
+        else:
+            query = user_query
+
     try:
-        r = requests.get(f"https://api.giphy.com/v1/gifs/search?api_key={GIPHY_KEY}&q={termo}&limit=25&rating=pg", timeout=10).json()
+        url = "https://api.giphy.com/v1/gifs/search"
+        params = {
+            "api_key": GIPHY_KEY,
+            "q": query,
+            "limit": 25,
+            "rating": "pg-13"
+        }
+
+        r = requests.get(url, params=params, timeout=10).json()
         data = r.get("data", [])
+
         if not data:
-            bot.reply_to(m, "💛 Nenhum GIF.")
+            url = "https://api.giphy.com/v1/gifs/trending"
+            params = {
+                "api_key": GIPHY_KEY,
+                "limit": 25
+            }
+
+            r = requests.get(url, params=params, timeout=10).json()
+            data = r.get("data", [])
+
+        if not data:
+            bot.reply_to(m, "💛 Não encontrei nenhum GIF.")
             return
-        bot.send_animation(m.chat.id, random.choice(data)["images"]["original"]["url"])
-    except:
+
+        gif_url = random.choice(data)["images"]["original"]["url"]
+
+        bot.send_animation(m.chat.id, gif_url)
+
+    except Exception as e:
+        print("Erro no /gif:", e)
         bot.reply_to(m, "💛 Erro ao buscar GIF.")
 
 @bot.message_handler(commands=['meme'])
@@ -247,29 +290,58 @@ def avatar(m):
         bot.reply_to(m, "💛 Sem foto.")
 
 # ======================
-# WAIFU / WAIFUNSFW
+# WAIFU IMAGEM (SFW)
 # ======================
-@bot.message_handler(commands=['waifu','waifunsfw'])
+@bot.message_handler(commands=['waifu'])
 def waifu(m):
-    if m.text.startswith("/waifunsfw") and m.chat.type != "private":
-        bot.reply_to(m, "🚫 NSFW só no privado!")
-        return
-    # Garante SFW ou NSFW aleatório (imagem ou gif)
-    if m.text.startswith("/waifunsfw"):
-        url_api = random.choice([
-            "https://api.waifu.pics/nsfw/waifu",
-            "https://api.waifu.pics/nsfw/waifu/gif"
-        ])
-    else:
-        url_api = random.choice([
-            "https://api.waifu.pics/sfw/waifu",
-            "https://api.waifu.pics/sfw/waifu/gif"
-        ])
     try:
-        r = requests.get(url_api, timeout=10).json()
+        r = requests.get("https://api.waifu.pics/sfw/waifu", timeout=10).json()
         bot.send_photo(m.chat.id, r["url"], caption="💛 Aqui está sua waifu!")
     except:
         bot.reply_to(m, "💛 Não consegui pegar a waifu!")
+
+# ======================
+# WAIFU GIF (SFW)
+# ======================
+@bot.message_handler(commands=['waifugif'])
+def waifugif(m):
+    try:
+        r = requests.get("https://api.waifu.pics/sfw/waifu", timeout=10).json()
+        bot.send_animation(m.chat.id, r["url"], caption="💛 Aqui está sua waifu GIF!")
+    except:
+        bot.reply_to(m, "💛 Não consegui pegar o gif!")
+
+# ======================
+# WAIFU NSFW (IMAGEM)
+# ======================
+@bot.message_handler(commands=['waifunsfw'])
+def waifunsfw(m):
+
+    if m.chat.type != "private":
+        bot.reply_to(m, "🚫 NSFW só no privado!")
+        return
+
+    try:
+        r = requests.get("https://api.waifu.pics/nsfw/waifu", timeout=10).json()
+        bot.send_photo(m.chat.id, r["url"], caption="🔞 Waifu NSFW!")
+    except:
+        bot.reply_to(m, "💛 Não consegui pegar a waifu NSFW!")
+
+# ======================
+# WAIFU NSFW GIF
+# ======================
+@bot.message_handler(commands=['gifnsfw'])
+def gifnsfw(m):
+
+    if m.chat.type != "private":
+        bot.reply_to(m, "🚫 NSFW só no privado!")
+        return
+
+    try:
+        r = requests.get("https://api.waifu.pics/nsfw/waifu", timeout=10).json()
+        bot.send_animation(m.chat.id, r["url"], caption="🔞 Waifu GIF NSFW!")
+    except:
+        bot.reply_to(m, "💛 Não consegui pegar o gif NSFW!")
 
 # ======================
 # MODERAÇÃO
