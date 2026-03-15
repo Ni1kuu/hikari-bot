@@ -166,14 +166,31 @@ def avatar(m):
 # ======================
 @bot.message_handler(commands=['ban'])
 def ban(m):
+
     if m.reply_to_message:
-        try:
-            bot.ban_chat_member(m.chat.id, m.reply_to_message.from_user.id)
-            bot.reply_to(m,"🚫 Usuário banido com sucesso!")
-        except:
-            bot.reply_to(m,"💛 Não foi possível banir o usuário.")
+        user_id = m.reply_to_message.from_user.id
+
     else:
-        bot.reply_to(m,"💛 Responda à mensagem da pessoa que deseja banir.")
+        args = m.text.split()
+
+        if len(args) < 2:
+            bot.reply_to(m,"💛 Use:\n/ban @usuario")
+            return
+
+        username = args[1].replace("@","")
+
+        try:
+            member = bot.get_chat_member(m.chat.id, username)
+            user_id = member.user.id
+        except:
+            bot.reply_to(m,"💛 Usuário não encontrado.")
+            return
+
+    try:
+        bot.ban_chat_member(m.chat.id,user_id)
+        bot.reply_to(m,"🚫 Usuário banido!")
+    except:
+        bot.reply_to(m,"💛 Não consegui banir.")
 
 # ======================
 # ANTILINK
@@ -203,16 +220,16 @@ def verifica_link(m):
 # ======================
 @bot.message_handler(commands=['google'])
 def google(m):
-    try:
-        texto = m.text.replace("/google","").strip()
-        if not texto:
-            bot.reply_to(m,"💛 Use: /google termo de pesquisa")
-            return
-        termo = urllib.parse.quote_plus(texto)
-        link = f"https://www.google.com/search?q={termo}"
-        bot.send_message(m.chat.id,f"🔎 Pesquisa Google\n📌 {texto}\n🌐 {link}")
-    except:
-        bot.reply_to(m,"💛 Erro ao pesquisar no Google!")
+    args = m.text.split(maxsplit=1)
+
+    if len(args) < 2:
+        bot.reply_to(m,"💛 Use:\n/google algo para pesquisar")
+        return
+
+    query = urllib.parse.quote_plus(args[1])
+    link = f"https://www.google.com/search?q={query}"
+
+    bot.send_message(m.chat.id,f"🔎 Pesquisa Google\n\n🌐 {link}")
 
 # ======================
 # MEME (pt-BR)
@@ -220,52 +237,125 @@ def google(m):
 @bot.message_handler(commands=['meme'])
 def meme(m):
     try:
-        r = requests.get("https://meme-api.com/gimme/pt_br").json()
-        bot.send_photo(m.chat.id, r['url'])
+        r = requests.get("https://meme-api.com/gimme").json()
+        bot.send_photo(m.chat.id, r["url"], caption=r["title"])
     except:
-        bot.reply_to(m,"💛 Não consegui buscar um meme.")
+        bot.reply_to(m, "💛 Não consegui pegar um meme agora.")
 
 # ======================
 # PLAY (YouTube)
 # ======================
 @bot.message_handler(commands=['play'])
-def play(m):
-    args = m.text.split(maxsplit=1)
+def play(message):
+
+    args = message.text.split(maxsplit=1)
+
     if len(args) < 2:
-        bot.reply_to(m,"💛 Use: /play nome da música")
+        bot.reply_to(message,"💛 Use:\n/play nome da música")
         return
+
     query = args[1]
-    try:
-        url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
-        r = requests.get(url).json()
-        if not r.get("items"):
-            bot.reply_to(m,"💛 Não encontrei essa música.")
-            return
-        video = r["items"][0]
-        titulo = video["snippet"]["title"]
-        canal = video["snippet"]["channelTitle"]
-        video_id = video["id"]["videoId"]
-        link = f"https://youtu.be/{video_id}"
-        bot.send_message(m.chat.id,f"🎵 Música encontrada!\n📀 {titulo}\n📺 Canal: {canal}\n▶️ {link}")
-    except:
-        bot.reply_to(m,"💛 Erro ao buscar a música.")
+
+    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
+
+    r = requests.get(url).json()
+
+    if not r["items"]:
+        bot.reply_to(message,"💛 Música não encontrada.")
+        return
+
+    video = r["items"][0]
+
+    title = video["snippet"]["title"]
+    channel = video["snippet"]["channelTitle"]
+    video_id = video["id"]["videoId"]
+
+    link = f"https://youtu.be/{video_id}"
+
+    bot.send_message(
+        message.chat.id,
+        f"🎵 Música encontrada!\n\n"
+        f"📀 {title}\n"
+        f"📺 {channel}\n\n"
+        f"▶️ {link}"
+    )
 
 # ======================
 # INFO (Uptime)
 # ======================
 @bot.message_handler(commands=['info'])
 def info(m):
-    uptime_segundos = int(time.time() - start_time)
-    horas = uptime_segundos // 3600
-    minutos = (uptime_segundos % 3600) // 60
-    segundos = uptime_segundos % 60
-    msg = "╭━━━━━━━━━━━━━━━\n" \
-          "🌻 INFO HIKARI 🌻\n" \
-          "╰━━━━━━━━━━━━━━━\n" \
-          f"🌻 Versão: 1.0\n" \
-          "👤 Criador: @ni1ckkj\n" \
-          f"⏱ Uptime: {horas}h {minutos}m {segundos}s"
+    uptime = int(time.time() - start_time)
+
+    horas = uptime // 3600
+    minutos = (uptime % 3600) // 60
+    segundos = uptime % 60
+
+    msg = (
+    "╭━━━━━━━━━━━━━━━\n"
+    "🌻 INFO HIKARI 🌻\n"
+    "╰━━━━━━━━━━━━━━━\n"
+    "🤖 Bot: Hikari\n"
+    "👤 Criador: @ni1ckkj\n"
+    f"⏱ Uptime: {horas}h {minutos}m {segundos}s"
+    )
+
     bot.send_message(m.chat.id,msg)
+# =========================
+# CHAT AUTOMÁTICO HIKARI
+# =========================
+
+@bot.message_handler(func=lambda m: True)
+def hikari_chat(m):
+
+    if not m.text:
+        return
+
+    texto = m.text.lower()
+
+    respostas = {
+        "hikari":[
+        "Oi! Você me chamou? 🌻",
+        "Hikari está aqui! ✨",
+        "Sim? 💛"
+        ],
+
+        "bom dia":[
+        "Bom dia! ☀️",
+        "Espero que seu dia seja incrível!"
+        ],
+
+        "boa noite":[
+        "Boa noite! 🌙",
+        "Durma bem!"
+        ],
+
+        "anime":[
+        "Eu amo anime! 🌸",
+        "Anime é vida!"
+        ],
+
+        "waifu":[
+        "Você falou de waifus? 👀",
+        "Waifus são incríveis!"
+        ],
+
+        "oi":[
+        "Oi oi! 🌻",
+        "Olá!"
+        ]
+    }
+
+    for palavra in respostas:
+
+        if palavra in texto:
+
+            bot.reply_to(
+                m,
+                random.choice(respostas[palavra])
+            )
+
+            break
 
 # ======================
 # INICIAR BOT
