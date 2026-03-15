@@ -1,0 +1,8 @@
+# Arquivos de dados do bot
+data.json
+
+# Arquivo de ambiente
+.env
+
+# Cache do Python
+__pycache__/
