@@ -496,3 +496,28 @@ def welcome(m):
 """
         try:
             bot.send_photo(m.chat.id, "https://i.imgur.com/9XnK8YB.jpeg", caption=mensagem)
+        except:
+            bot.send_message(m.chat.id, mensagem)
+
+@bot.message_handler(content_types=['left_chat_member'])
+def goodbye(m):
+    user = m.left_chat_member
+    if user:
+        hora = time.strftime("%H:%M")
+        mensagem = f"""
+🌸 Alguém saiu do grupo.
+
+👤 Usuário: {user.first_name}
+🕒 Saiu às: {hora}
+
+💛 Até logo!
+"""
+        try:
+            bot.send_photo(m.chat.id, "https://i.imgur.com/9XnK8YB.jpeg", caption=mensagem)
+        except:
+            bot.send_message(m.chat.id, mensagem)
+
+# ======================
+# INICIAR BOT
+# ======================
+bot.polling(none_stop=True)
