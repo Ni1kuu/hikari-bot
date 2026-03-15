@@ -216,20 +216,35 @@ def verifica_link(m):
         except: pass
 
 # ======================
-# GOOGLE
+# GOOGLE (pesquisa rápida)
 # ======================
+import urllib.parse
+
 @bot.message_handler(commands=['google'])
 def google(m):
-    args = m.text.split(maxsplit=1)
+    try:
+        # Remove o comando e pega o texto da pesquisa
+        texto = m.text.replace("/google", "").strip()
 
-    if len(args) < 2:
-        bot.reply_to(m,"💛 Use:\n/google algo para pesquisar")
-        return
+        if not texto:  # Se não tiver termo
+            bot.reply_to(m, "💛 Use: /google <termo>")
+            return
 
-    query = urllib.parse.quote_plus(args[1])
-    link = f"https://www.google.com/search?q={query}"
+        # Escapa espaços e caracteres especiais
+        termo = urllib.parse.quote_plus(texto)
+        link = f"https://www.google.com/search?q={termo}"
 
-    bot.send_message(m.chat.id,f"🔎 Pesquisa Google\n\n🌐 {link}")
+        # Envia a mensagem com link
+        bot.send_message(
+            m.chat.id,
+            f"🔎 Pesquisa Google\n\n"
+            f"📌 Termo pesquisado: {texto}\n"
+            f"🌐 Link: {link}"
+        )
+
+    except Exception as e:
+        print("Erro no /google:", e)
+        bot.reply_to(m, "💛 Erro ao fazer a pesquisa.")
 
 # ======================
 # MEME (pt-BR)
@@ -304,7 +319,6 @@ def info(m):
 # =========================
 # CHAT AUTOMÁTICO HIKARI
 # =========================
-
 @bot.message_handler(func=lambda m: True)
 def hikari_chat(m):
 
