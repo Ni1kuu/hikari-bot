@@ -214,28 +214,49 @@ def verifica_link(m):
         except: pass
 
 # ======================
-# GOOGLE
+# GOOGLE (API REAL)
 # ======================
 @bot.message_handler(commands=['google'])
 def google(m):
     args = m.text.split(maxsplit=1)
-    if len(args) < 2:
-        bot.reply_to(m,"💛 Use: /google <termo>")
-        return
-    termo_busca = urllib.parse.quote_plus(args[1])
-    link = f"https://www.google.com/search?q={termo_busca}"
-    bot.send_message(m.chat.id,f"🔎 Pesquisa Google\n📌 {args[1]}\n🌐 {link}")
 
-# ======================
-# MEME
-# ======================
-@bot.message_handler(commands=['meme'])
-def meme(m):
+    if len(args) < 2:
+        bot.reply_to(m,"💛 Use: /google <pesquisa>")
+        return
+
+    query = args[1]
+
+    url = "https://serpapi.com/search"
+
+    params = {
+        "q": query,
+        "api_key": SERPAPI_KEY,
+        "engine": "google",
+        "hl": "pt-br"
+    }
+
     try:
-        r = requests.get("https://meme-api.com/gimme").json()
-        bot.send_photo(m.chat.id, r["url"], caption=r["title"])
+        r = requests.get(url, params=params).json()
+
+        resultados = r.get("organic_results", [])
+
+        if not resultados:
+            bot.reply_to(m,"💛 Não encontrei resultados.")
+            return
+
+        msg = f"🔎 Resultados para: {query}\n\n"
+
+        for res in resultados[:3]:
+            titulo = res.get("title")
+            link = res.get("link")
+            desc = res.get("snippet","")
+
+            msg += f"📌 {titulo}\n{desc}\n🌐 {link}\n\n"
+
+        bot.send_message(m.chat.id,msg)
+
     except:
-        bot.reply_to(m, "💛 Não consegui pegar um meme agora.")
+        bot.reply_to(m,"💛 Erro ao buscar no Google.")
 
 # ======================
 # PLAY (YouTube)
