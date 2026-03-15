@@ -495,4 +495,4 @@ def welcome(m):
 💛 Aproveite o grupo!
 """
         try:
-            bot.send_photo(m.chat.id, "https://i.imgur.com
+            bot.send_photo(m.chat.id, "https://i.imgur.com/9XnK8YB.jpeg", caption=mensagem)
