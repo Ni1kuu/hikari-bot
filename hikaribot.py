@@ -5,6 +5,7 @@ import random
 import time
 import urllib.parse
 import json
+from telebot import types
 
 # ----------------------
 # VARIÁVEIS
@@ -13,6 +14,10 @@ TOKEN = os.getenv("BOT_TOKEN")
 GIPHY_KEY = os.getenv("GIPHY_KEY")
 YOUTUBE_KEY = os.getenv("YOUTUBE_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+
+BOT_VERSION = "2.6.3-mini"
+CREATOR = "@ni1ckkj"
+BOT_NAME = "Hikari"
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -52,10 +57,10 @@ def save_data():
 # ----------------------
 # MENU
 # ----------------------
-MENU = """
-╭━━━ 🌻 HIKARI BOT 🌻 ━━━╮
+MENU = f"""
+╭━━━ 🌻 {BOT_NAME} BOT 🌻 ━━━╮
 
-👋 Olá! Eu sou a Hikari! ꒰ᐢ. .ᐢ꒱₊˚⊹ 
+👋 Olá! Eu sou a {BOT_NAME}! ꒰ᐢ. .ᐢ꒱₊˚⊹ 
 Use meus comandos abaixo:
 
 ━━━━━━━━━━━━━━━━
@@ -64,22 +69,19 @@ Use meus comandos abaixo:
 /start • /ping • /info
 
 🎮 DIVERSÃO
-/gif • /meme • /waifu • /play
+/gif • /meme • /waifu • /waifunsfw • /play
 
 🔎 PESQUISA
 /google • /image
 
 👤 PERFIL
-/userinfo • /avatar
+/userinfo • /avatar • /level • /rank • /saldo • /coinflip • /daily
 
 📌 GRUPO
-/pin • /unpin
+/pin • /unpin • /dado • /ship
 
 🛡 MODERAÇÃO
-/ban • /warn
-/mute • /unmute
-/limpar
-/antilink on/off
+/ban • /warn • /mute • /unmute • /limpar • /antilink on/off
 
 ━━━━━━━━━━━━━━━━
 
@@ -116,8 +118,6 @@ def gain_xp(m):
     user = str(m.from_user.id)
     xp[user] = xp.get(user, 0) + 5
     save_data()
-    # Opcional: mensagem de XP
-    # bot.reply_to(m, f"⭐ Você ganhou 5 XP! Total: {xp[user]} XP")
 
 # ======================
 # PIN / UNPIN
@@ -142,7 +142,7 @@ def unpin(m):
         bot.reply_to(m, "🚫 Erro ao desfixar.")
 
 # ======================
-# LEVEL
+# LEVEL / RANK / COINS
 # ======================
 @bot.message_handler(commands=['level'])
 def level(m):
@@ -151,18 +151,62 @@ def level(m):
     lvl = user_xp // 100
     bot.reply_to(m, f"⭐ {m.from_user.first_name}\nXP: {user_xp}\nLevel: {lvl}")
 
+@bot.message_handler(commands=['rank'])
+def rank(m):
+    ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
+    text = "🏆 Ranking\n\n"
+    for i, (user_id, points) in enumerate(ranking[:5], start=1):
+        try:
+            user_name = bot.get_chat_member(m.chat.id, int(user_id)).user.first_name
+        except:
+            user_name = str(user_id)
+        text += f"{i}. {user_name} - {points} XP\n"
+    bot.send_message(m.chat.id, text)
+
+@bot.message_handler(commands=['saldo'])
+def saldo(m):
+    user = str(m.from_user.id)
+    bot.reply_to(m, f"💰 Seu saldo: {coins.get(user, 0)} coins")
+
+@bot.message_handler(commands=['daily'])
+def daily(m):
+    user = str(m.from_user.id)
+    now = time.time()
+    week = 7 * 24 * 60 * 60
+    last = daily_cooldown.get(user, 0)
+    if now - last < week:
+        bot.reply_to(m, f"💛 Você já coletou seu daily semanal! Aguarde.")
+        return
+    reward = random.randint(50, 150)
+    coins[user] = coins.get(user, 0) + reward
+    daily_cooldown[user] = now
+    save_data()
+    bot.reply_to(m, f"💰 Você recebeu {reward} coins!\nSaldo atual: {coins[user]} coins")
+
+@bot.message_handler(commands=['coinflip'])
+def coinflip(m):
+    user = str(m.from_user.id)
+    if coins.get(user, 0) < 10:
+        bot.reply_to(m, "💛 Você precisa de 10 coins")
+        return
+    coins[user] -= 10
+    if random.choice([True, False]):
+        coins[user] += 20
+        resultado = f"🪙 Cara! Você ganhou 20 coins"
+    else:
+        resultado = f"🪙 Coroa! Você perdeu"
+    save_data()
+    bot.reply_to(m, f"{resultado}\nSaldo atual: {coins[user]} coins")
+
 # ======================
-# GIF
+# GIF / MEME
 # ======================
 @bot.message_handler(commands=['gif'])
 def gif(m):
     args = m.text.split()
     termo = "anime " + " ".join(args[1:]) if len(args) > 1 else "anime"
     try:
-        r = requests.get(
-            f"https://api.giphy.com/v1/gifs/search?api_key={GIPHY_KEY}&q={termo}&limit=25",
-            timeout=10
-        ).json()
+        r = requests.get(f"https://api.giphy.com/v1/gifs/search?api_key={GIPHY_KEY}&q={termo}&limit=25&rating=pg", timeout=10).json()
         data = r.get("data", [])
         if not data:
             bot.reply_to(m, "💛 Nenhum GIF.")
@@ -171,9 +215,6 @@ def gif(m):
     except:
         bot.reply_to(m, "💛 Erro ao buscar GIF.")
 
-# ======================
-# MEME
-# ======================
 @bot.message_handler(commands=['meme'])
 def meme(m):
     try:
@@ -204,6 +245,31 @@ def avatar(m):
         bot.send_photo(m.chat.id, photos.photos[0][0].file_id)
     else:
         bot.reply_to(m, "💛 Sem foto.")
+
+# ======================
+# WAIFU / WAIFUNSFW
+# ======================
+@bot.message_handler(commands=['waifu','waifunsfw'])
+def waifu(m):
+    if m.text.startswith("/waifunsfw") and m.chat.type != "private":
+        bot.reply_to(m, "🚫 NSFW só no privado!")
+        return
+    # Garante SFW ou NSFW aleatório (imagem ou gif)
+    if m.text.startswith("/waifunsfw"):
+        url_api = random.choice([
+            "https://api.waifu.pics/nsfw/waifu",
+            "https://api.waifu.pics/nsfw/waifu/gif"
+        ])
+    else:
+        url_api = random.choice([
+            "https://api.waifu.pics/sfw/waifu",
+            "https://api.waifu.pics/sfw/waifu/gif"
+        ])
+    try:
+        r = requests.get(url_api, timeout=10).json()
+        bot.send_photo(m.chat.id, r["url"], caption="💛 Aqui está sua waifu!")
+    except:
+        bot.reply_to(m, "💛 Não consegui pegar a waifu!")
 
 # ======================
 # MODERAÇÃO
@@ -257,179 +323,6 @@ def unmute(m):
     except:
         bot.reply_to(m, "💛 Não consegui desmutar.")
 
-# ======================
-# PESQUISA / IMAGE / PLAY
-# ======================
-@bot.message_handler(commands=['google'])
-def google(m):
-    args = m.text.split(maxsplit=1)
-    if len(args) < 2:
-        return
-    query = args[1]
-    params = {"q": query, "engine": "google", "api_key": SERPAPI_KEY}
-    try:
-        r = requests.get("https://serpapi.com/search", params=params, timeout=10).json()
-        resultados = r.get("organic_results", [])
-        msg = f"🔎 {query}\n\n"
-        for res in resultados[:3]:
-            msg += f"{res.get('title')}\n{res.get('link')}\n\n"
-        bot.send_message(m.chat.id, msg)
-    except:
-        bot.reply_to(m, "💛 Erro na busca.")
-
-@bot.message_handler(commands=['image'])
-def image(m):
-    args = m.text.split(maxsplit=1)
-    if len(args) < 2:
-        return
-    query = args[1]
-    params = {"engine": "google_images", "q": query, "api_key": SERPAPI_KEY}
-    try:
-        r = requests.get("https://serpapi.com/search", params=params, timeout=10).json()
-        imgs = r.get("images_results", [])
-        if not imgs:
-            bot.reply_to(m, "💛 Nenhuma imagem.")
-            return
-        img = random.choice(imgs)
-        bot.send_photo(m.chat.id, img["original"], caption=query)
-    except:
-        bot.reply_to(m, "💛 Erro ao buscar imagem 
-@bot.message_handler(commands=['play'])
-def play(message):
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2:
-        bot.reply_to(message, "💛 Use:\n/play nome da música")
-        return
-
-    query = args[1]
-    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
-
-    try:
-        r = requests.get(url, timeout=10).json()
-        items = r.get("items", [])
-        if not items:
-            bot.reply_to(message, "💛 Música não encontrada.")
-            return
-
-        video = items[0]
-        title = video["snippet"]["title"]
-        channel = video["snippet"]["channelTitle"]
-        video_id = video["id"]["videoId"]
-        link = f"https://youtu.be/{video_id}"
-
-        bot.send_message(
-            message.chat.id,
-            f"🎵 Música encontrada!\n\n"
-            f"📀 {title}\n"
-            f"📺 {channel}\n\n"
-            f"▶️ {link}"
-        )
-
-    except Exception as e:
-        print("Erro no /play:", e)
-        bot.reply_to(message, "💛 Erro ao buscar música.")
-
-# ======================
-# RANK / DAILY / COINFLIP / SALDO
-# ======================
-@bot.message_handler(commands=['rank'])
-def rank(m):
-    ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
-    text = "🏆 Ranking\n\n"
-    for i, (user_id, points) in enumerate(ranking[:5], start=1):
-        try:
-            user_name = bot.get_chat_member(m.chat.id, int(user_id)).user.first_name
-        except:
-            user_name = str(user_id)
-        text += f"{i}. {user_name} - {points} XP\n"
-    bot.send_message(m.chat.id, text)
-
-@bot.message_handler(commands=['daily'])
-def daily(m):
-    user = str(m.from_user.id)
-    now = time.time()
-    week = 7 * 24 * 60 * 60
-    last = daily_cooldown.get(user, 0)
-    if now - last < week:
-        bot.reply_to(m, f"💛 Você já coletou seu daily semanal! Aguarde.")
-        return
-    reward = random.randint(50, 150)
-    coins[user] = coins.get(user, 0) + reward
-    daily_cooldown[user] = now
-    save_data()
-    bot.reply_to(m, f"💰 Você recebeu {reward} coins!\nSaldo atual: {coins[user]} coins")
-
-@bot.message_handler(commands=['saldo'])
-def saldo(m):
-    user = str(m.from_user.id)
-    bot.reply_to(m, f"💰 Seu saldo: {coins.get(user, 0)} coins")
-
-@bot.message_handler(commands=['coinflip'])
-def coinflip(m):
-    user = str(m.from_user.id)
-    if coins.get(user, 0) < 10:
-        bot.reply_to(m, "💛 Você precisa de 10 coins")
-        return
-    coins[user] -= 10
-    if random.choice([True, False]):
-        coins[user] += 20
-        resultado = f"🪙 Cara! Você ganhou 20 coins"
-    else:
-        resultado = f"🪙 Coroa! Você perdeu"
-    save_data()
-    bot.reply_to(m, f"{resultado}\nSaldo atual: {coins[user]} coins")
-
-# ======================
-# DADO / SHIP / INFO / ANTILINK / LIMPAR
-# ======================
-@bot.message_handler(commands=['dado'])
-def dado(m):
-    bot.reply_to(m, f"🎲 Resultado: {random.randint(1, 6)}")
-
-@bot.message_handler(commands=['ship'])
-def ship(m):
-    if not m.reply_to_message:
-        return
-    score = random.randint(1, 100)
-    user1 = m.from_user.first_name
-    user2 = m.reply_to_message.from_user.first_name
-    bot.send_message(m.chat.id, f"💕 {user1} + {user2}\nCompatibilidade: {score}%")
-
-#info
-
-BOT_VERSION = "2.6.3"  # Coloque a versão do seu bot aqui
-CREATOR_USERNAME = "@ni1ckkj"  # Seu usuário do Telegram
-
-@bot.message_handler(commands=['info'])
-def info(m):
-    uptime = int(time.time() - start_time)
-    horas = uptime // 3600
-    minutos = (uptime % 3600) // 60
-    segundos = uptime % 60
-
-    msg = (
-        "╭━━━━━━━━━━━━━━━\n"
-        "🌻 INFO HIKARI 🌻\n"
-        "╰━━━━━━━━━━━━━━━\n"
-        f"🤖 Nome: HikariBot\n"
-        f"⏱ Uptime: {horas}h {minutos}m {segundos}s\n"
-        f"👤 Criador: {CREATOR_USERNAME}\n"
-        f"⚡ Versão: {BOT_VERSION}"
-    )
-    bot.send_message(m.chat.id, msg)
-
-@bot.message_handler(commands=['antilink'])
-def anti(m):
-    args = m.text.split()
-    if len(args) < 2:
-        return
-    if args[1] == "on":
-        antilink[m.chat.id] = True
-        bot.reply_to(m, "🚫 Antilink ativado")
-    elif args[1] == "off":
-        antilink[m.chat.id] = False
-        bot.reply_to(m, "✅ Antilink desativado")
-
 @bot.message_handler(commands=['limpar'])
 def limpar(m):
     args = m.text.split()
@@ -449,8 +342,126 @@ def limpar(m):
     except:
         bot.reply_to(m, "💛 Número inválido.")
 
+@bot.message_handler(commands=['antilink'])
+def anti(m):
+    args = m.text.split()
+    if len(args) < 2:
+        return
+    if args[1].lower() == "on":
+        antilink[m.chat.id] = True
+        bot.reply_to(m, "🚫 Antilink ativado")
+    elif args[1].lower() == "off":
+        antilink[m.chat.id] = False
+        bot.reply_to(m, "✅ Antilink desativado")
+
 # ======================
-# GLOBAL HANDLER (ANTILINK)
+# GOOGLE / IMAGE
+# ======================
+@bot.message_handler(commands=['google'])
+def google(m):
+    args = m.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(m, "💛 Use: /google <termo>")
+        return
+    query = args[1]
+    params = {"q": query, "engine": "google", "api_key": SERPAPI_KEY}
+    try:
+        r = requests.get("https://serpapi.com/search", params=params, timeout=10).json()
+        resultados = r.get("organic_results", [])
+        if not resultados:
+            bot.reply_to(m, "💛 Nenhum resultado encontrado.")
+            return
+        msg = f"🔎 {query}\n\n"
+        for res in resultados[:3]:
+            msg += f"{res.get('title')}\n{res.get('link')}\n\n"
+        bot.send_message(m.chat.id, msg)
+    except:
+        bot.reply_to(m, "💛 Erro na busca.")
+
+@bot.message_handler(commands=['image'])
+def image(m):
+    args = m.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(m, "💛 Use: /image <termo>")
+        return
+    query = args[1]
+    params = {"engine": "google_images", "q": query, "api_key": SERPAPI_KEY}
+    try:
+        r = requests.get("https://serpapi.com/search", params=params, timeout=10).json()
+        imgs = r.get("images_results", [])
+        if not imgs:
+            bot.reply_to(m, "💛 Nenhuma imagem encontrada.")
+            return
+        img = random.choice(imgs)
+        bot.send_photo(m.chat.id, img["original"], caption=query)
+    except:
+        bot.reply_to(m, "💛 Erro ao buscar imagem.")
+
+# ======================
+# PLAY (YouTube)
+# ======================
+@bot.message_handler(commands=['play'])
+def play(message):
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(message, "💛 Use:\n/play nome da música")
+        return
+
+    query = args[1]
+    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
+    try:
+        r = requests.get(url, timeout=10).json()
+        items = r.get("items", [])
+        if not items:
+            bot.reply_to(message, "💛 Música não encontrada.")
+            return
+        video = items[0]
+        title = video["snippet"]["title"]
+        channel = video["snippet"]["channelTitle"]
+        vid = video["id"]["videoId"]
+        bot.send_message(message.chat.id, f"🎵 {title}\n📺 {channel}\nhttps://youtu.be/{vid}")
+    except Exception as e:
+        print("Erro no /play:", e)
+        bot.reply_to(message, "💛 Erro ao buscar música.")
+
+# ======================
+# DADO / SHIP
+# ======================
+@bot.message_handler(commands=['dado'])
+def dado(m):
+    bot.reply_to(m, f"🎲 Resultado: {random.randint(1, 6)}")
+
+@bot.message_handler(commands=['ship'])
+def ship(m):
+    if not m.reply_to_message:
+        return
+    score = random.randint(1, 100)
+    user1 = m.from_user.first_name
+    user2 = m.reply_to_message.from_user.first_name
+    bot.send_message(m.chat.id, f"💕 {user1} + {user2}\nCompatibilidade: {score}%")
+
+# ======================
+# INFO (BOT)
+# ======================
+@bot.message_handler(commands=['info'])
+def info(m):
+    uptime = int(time.time() - start_time)
+    h = uptime // 3600
+    m2 = (uptime % 3600) // 60
+    s = uptime % 60
+    msg = (
+        f"╭━━━━━━━━━━━━━━━\n"
+        f"🌻 {BOT_NAME} BOT 🌻\n"
+        f"╰━━━━━━━━━━━━━━━\n"
+        f"🤖 Nome: {BOT_NAME}\n"
+        f"⏱ Uptime: {h}h {m2}m {s}s\n"
+        f"👤 Criador: {CREATOR}\n"
+        f"🛠 Versão: {BOT_VERSION}"
+    )
+    bot.send_message(m.chat.id, msg)
+
+# ======================
+# ANTILINK GLOBAL
 # ======================
 @bot.message_handler(func=lambda m: True)
 def global_handler(m):
@@ -484,42 +495,4 @@ def welcome(m):
 💛 Aproveite o grupo!
 """
         try:
-            bot.send_photo(m.chat.id, "https://i.imgur.com/9XnK8YB.jpeg", caption=mensagem)
-        except:
-            bot.send_message(m.chat.id, mensagem)
-
-@bot.message_handler(content_types=['left_chat_member'])
-def goodbye(m):
-    user = m.left_chat_member
-    nome = user.first_name
-    tempo_texto = "tempo desconhecido"
-    if user.id in entradas:
-        tempo = int(time.time() - entradas[user.id])
-        dias = tempo // 86400
-        horas = (tempo % 86400) // 3600
-        minutos = (tempo % 3600) // 60
-        tempo_texto = f"{dias}d {horas}h {minutos}m"
-    mensagem = f"""
-👋 Um membro saiu do grupo
-
-👤 Usuário: {nome}
-⏳ Ficou no grupo por: {tempo_texto}
-
-Esperamos te ver novamente 💛
-"""
-    try:
-        bot.send_photo(m.chat.id, "https://i.imgur.com/4M34hi2.jpeg", caption=mensagem)
-    except:
-        bot.send_message(m.chat.id, mensagem)
-
-# ======================
-# INÍCIO
-# ======================
-print("🌻 HikariBot iniciado!")
-
-while True:
-    try:
-        bot.infinity_polling(skip_pending=True)
-    except Exception as e:
-        print(e)
-        time.sleep(5)
+            bot.send_photo(m.chat.id, "https://i.imgur.com
