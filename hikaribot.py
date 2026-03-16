@@ -25,32 +25,6 @@ BOT_NAME = "Hikari"
 
 bot = telebot.TeleBot(TOKEN)
 
-# ======================
-# SERVIDOR WEB (Railway)
-# ======================
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Hikari bot online 🌸"
-
-@app.route("/r34/<tag>")
-def r34(tag):
-    try:
-        url = f"https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&json=1&tags={tag}"
-        r = requests.get(url, timeout=10).json()
-
-        images = []
-        for post in r:
-            img = post.get("file_url")
-            if img:
-                images.append(img)
-
-        return jsonify(images[:20])
-    except:
-        return jsonify({"erro": "falha ao buscar imagens"})
-
 antilink = {}
 warns = {}
 entradas = {}
