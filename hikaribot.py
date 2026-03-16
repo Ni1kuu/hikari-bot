@@ -63,17 +63,14 @@ start_time = time.time()
 MENU = f"""
 ╭━━━ 🌻 {BOT_NAME} BOT 🌻 ━━━╮
 
-⚙️ SISTEMA
-/start • /ping • /info
-
 🎮 DIVERSÃO SFW & NSFW
-/gif • /meme • /waifu • /waifunsfw • /play • /waifugif • /gifnsfw • /r34 • /danbooru
+/gif • /meme • /waifunsfw • /play • /waifugif • /gifnsfw • /r34 • /danbooru
 
 🔎 PESQUISA
 /google • /image
 
 👤 PERFIL
-/userinfo • /avatar • /level • /rank • /saldo • /coinflip • /daily
+/avatar • /level • /rank • /saldo • /coinflip • /daily
 
 📌 GRUPO
 /pin • /unpin • /dado • /ship
@@ -90,9 +87,15 @@ MENU = f"""
 def menu(m):
     video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
 
-    keyboard = types.InlineKeyboardMarkup(row_width=2)
+    # Envia o vídeo de boas-vindas
+    bot.send_video(
+        m.chat.id,
+        video,
+        caption=f"🌸 Olá! Eu sou a {BOT_NAME}!\nBem-vindo(a) 💖"
+    )
 
-    # Botões que você pediu
+    # Cria teclado inline com os 4 botões principais
+    keyboard = types.InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         types.InlineKeyboardButton("👤 Perfil", callback_data="perfil"),
         types.InlineKeyboardButton("🏓 Ping", callback_data="ping"),
@@ -100,13 +103,27 @@ def menu(m):
         types.InlineKeyboardButton("ℹ️ Info", callback_data="info")
     )
 
-    bot.send_video(
-    m.chat.id,
-    video,
-    caption=f"🌻 Bem-vindo ao {BOT_NAME}!\nEscolha uma opção abaixo:",
-    reply_markup=keyboard
-)
+    # Mensagem fofinha do menu
+    msg_text = f"""
+🌼 *Bem-vindo(a) ao {BOT_NAME}!* 🌼
 
+✨ Aqui você pode se divertir, explorar e interagir comigo!
+💌 Escolha uma opção abaixo clicando nos botões:
+
+👤 Perfil → Veja seus dados
+🏓 Ping → Teste meu tempo de resposta
+🖼 Waifu → Receba uma waifu fofinha
+ℹ️ Info → Saiba mais sobre mim
+
+Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
+"""
+
+    bot.send_message(
+        m.chat.id,
+        msg_text,
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
 
 # ======================
 # CALLBACK HANDLER
@@ -117,14 +134,14 @@ def callback_inline(call):
     cid = call.message.chat.id
 
     if call.data == "perfil":
-        user = call.from_user
-        msg = (
-            f"🌻 USERINFO 🌻\n\n"
-            f"Nome: {user.first_name}\n"
-            f"Username: @{user.username if user.username else 'Não possui'}\n"
-            f"ID: {user.id}\n"
-            f"Bot: {user.is_bot}"
-        )
+    user = call.from_user
+    msg = (
+        f"🌼✨ *USERINFO* ✨🌼\n\n"
+        f"👤 Nome: {user.first_name}\n"
+        f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
+        f"🆔 ID: {user.id}\n"
+    )
+    bot.send_message(cid, msg, parse_mode="Markdown")
         bot.send_message(cid, msg)
 
     elif call.data == "ping":
