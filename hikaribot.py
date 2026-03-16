@@ -15,7 +15,7 @@ GIPHY_KEY = os.getenv("GIPHY_KEY")
 YOUTUBE_KEY = os.getenv("YOUTUBE_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
-BOT_VERSION = "2.6.3-mini"
+BOT_VERSION = "3.0"
 CREATOR = "@ni1ckkj"
 BOT_NAME = "Hikari"
 
@@ -52,7 +52,7 @@ def save_data():
             "xp": xp,
             "coins": coins,
             "daily_cooldown": daily_cooldown
-        }, f)
+        }, f, indent=2)
 
 # ----------------------
 # MENU
@@ -60,37 +60,69 @@ def save_data():
 MENU = f"""
 ╭━━━ 🌻 {BOT_NAME} BOT 🌻 ━━━╮
 
-👋 Olá! Eu sou a {BOT_NAME}! ꒰ᐢ. .ᐢ꒱₊˚⊹ 
+👋 Olá! Eu sou a {BOT_NAME}!  
+Um bot feito para ajudar e divertir. ꒰ᐢ. .ᐢ꒱₊˚⊹
 Use meus comandos abaixo:
-
 ━━━━━━━━━━━━━━━━
 
 ⚙️ SISTEMA
 /start • /ping • /info
 
+━━━━━━━━━━━━━━━━
+
 🎮 DIVERSÃO
-/gif • /meme • /waifu • /waifunsfw • /play • /waifugif • /gifnsfw 
+/gif • /meme • /waifu • /waifugif  
+/waifunsfw • /gifnsfw  
+/dado • /ship • /casal  
+/8ball • /roletarussa
+
+━━━━━━━━━━━━━━━━
 
 🔎 PESQUISA
-/google • /image
+/google • /image  
+/spotify • /tiktoksearch  
+/play
+
+━━━━━━━━━━━━━━━━
 
 👤 PERFIL
-/userinfo • /avatar • /level • /rank • /saldo • /coinflip • /daily
+/userinfo • /avatar  
+/level • /rank • /leaderboard  
+
+💰 ECONOMIA
+/saldo • /coinflip • /daily  
+/transfer • /topcoins
+
+━━━━━━━━━━━━━━━━
+
+💬 UTILIDADES
+/afk • /stickertexto
+
+━━━━━━━━━━━━━━━━
 
 📌 GRUPO
-/pin • /unpin • /dado • /ship
+/pin • /unpin
 
 🛡 MODERAÇÃO
-/ban • /warn • /mute • /unmute • /limpar • /antilink on/off
+/ban • /warn • /mute  
+/unmute • /limpar  
+/antilink on/off
 
 ━━━━━━━━━━━━━━━━
 
 🌸 Extras automáticos
-✔ Welcome automático
-✔ Goodbye automático
-✔ Tempo no grupo
+✔ Welcome automático  
+✔ Goodbye automático  
+✔ Sistema de XP  
+✔ Sistema de coins  
 
-╰━━━━━━━━━━━━━━━╯
+━━━━━━━━━━━━━━━━
+
+🤖 Bot: {BOT_NAME}  
+👤 Criador: {CREATOR}  
+🛠 Versão: {BOT_VERSION}
+
+╰━━━━━━━━━━━━━━━━╯
 """
 
 # ======================
@@ -403,8 +435,8 @@ def limpar(m):
         return
     try:
         n = int(args[1])
-        if n > 50:
-            n = 50
+        if n > 100:
+            n = 100
         for i in range(n):
             try:
                 bot.delete_message(m.chat.id, m.message_id - i)
@@ -535,17 +567,254 @@ def info(m):
 # ======================
 # ANTILINK GLOBAL
 # ======================
-@bot.message_handler(func=lambda m: True)
+@bot.message_handler(func=lambda m: m.text)
 def global_handler(m):
-    if m.text and antilink.get(m.chat.id):
+
+    if m.text.startswith("/"):
+        return
+
+    if antilink.get(m.chat.id):
+
         if "http" in m.text or "t.me" in m.text:
+
             try:
                 bot.delete_message(m.chat.id, m.message_id)
                 bot.ban_chat_member(m.chat.id, m.from_user.id)
                 bot.send_message(m.chat.id, "🚫 Link proibido!")
-                return
             except:
                 pass
+
+# ======================
+# AFK
+# ======================
+
+afk_users = {}
+
+@bot.message_handler(commands=['afk'])
+def afk(m):
+
+    motivo = m.text.replace("/afk","").strip()
+
+    if not motivo:
+        motivo = "Ausente"
+
+    afk_users[m.from_user.id] = motivo
+
+    bot.reply_to(
+        m,
+        f"🌙 {m.from_user.first_name} está AFK\nMotivo: {motivo}"
+    )
+
+@bot.message_handler(func=lambda m: m.from_user.id in afk_users)
+def sair_afk(m):
+
+    del afk_users[m.from_user.id]
+
+    bot.reply_to(
+        m,
+        "👋 Você voltou do AFK"
+    )
+
+
+# ======================
+# SPOTIFY
+# ======================
+
+@bot.message_handler(commands=['spotify'])
+def spotify(m):
+
+    args = m.text.split(maxsplit=1)
+
+    if len(args) < 2:
+        bot.reply_to(m,"💛 Use: /spotify nome da música")
+        return
+
+    query = urllib.parse.quote(args[1])
+
+    link = f"https://open.spotify.com/search/{query}"
+
+    bot.send_message(
+        m.chat.id,
+        f"🎧 Resultado Spotify\n{link}"
+    )
+
+
+# ======================
+# TIKTOK SEARCH
+# ======================
+
+@bot.message_handler(commands=['tiktoksearch'])
+def tiktoksearch(m):
+
+    args = m.text.split(maxsplit=1)
+
+    if len(args) < 2:
+        bot.reply_to(m,"💛 Use: /tiktoksearch termo")
+        return
+
+    query = urllib.parse.quote(args[1])
+
+    link = f"https://www.tiktok.com/search?q={query}"
+
+    bot.send_message(
+        m.chat.id,
+        f"🎵 Resultados TikTok\n{link}"
+    )
+
+
+# ======================
+# 8BALL
+# ======================
+
+@bot.message_handler(commands=['8ball'])
+def ball(m):
+
+    respostas = [
+        "Sim",
+        "Não",
+        "Talvez",
+        "Com certeza",
+        "Provavelmente",
+        "Impossível",
+        "Pergunte novamente mais tarde"
+    ]
+
+    bot.reply_to(
+        m,
+        f"🎱 {random.choice(respostas)}"
+    )
+
+
+# ======================
+# TRANSFER
+# ======================
+
+@bot.message_handler(commands=['transfer'])
+def transfer(m):
+
+    if not m.reply_to_message:
+        bot.reply_to(m,"💛 Responda o usuário.")
+        return
+
+    args = m.text.split()
+
+    if len(args) < 2:
+        bot.reply_to(m,"💛 Use: /transfer valor")
+        return
+
+    try:
+        amount = int(args[1])
+    except:
+        bot.reply_to(m,"💛 Valor inválido")
+        return
+
+    user = str(m.from_user.id)
+    target = str(m.reply_to_message.from_user.id)
+
+    if coins.get(user,0) < amount:
+
+        bot.reply_to(m,"💛 Saldo insuficiente")
+        return
+
+    coins[user] -= amount
+    coins[target] = coins.get(target,0) + amount
+
+    save_data()
+
+    bot.reply_to(m,f"💸 Transferido {amount} coins")
+
+
+# ======================
+# LEADERBOARD
+# ======================
+
+@bot.message_handler(commands=['leaderboard'])
+def leaderboard(m):
+
+    ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
+
+    text = "🌍 Ranking Global\n\n"
+
+    for i,(uid,p) in enumerate(ranking[:10],start=1):
+
+        text += f"{i}. {uid} - {p} XP\n"
+
+    bot.send_message(m.chat.id,text)
+
+# ======================
+# STICKER TEXTO
+# ======================
+
+@bot.message_handler(commands=['stickertexto'])
+def stickertexto(m):
+
+    texto = m.text.replace("/stickertexto","").strip()
+
+    if not texto:
+        bot.reply_to(m,"💛 Use: /stickertexto texto")
+        return
+
+    url = f"https://dummyimage.com/512x512/000/fff.png&text={urllib.parse.quote(texto)}"
+
+    bot.send_photo(m.chat.id,url)
+
+# ======================
+# CASAL
+# ======================
+
+@bot.message_handler(commands=['casal'])
+def casal(m):
+
+    if not m.reply_to_message:
+        bot.reply_to(m,"💛 Responda alguém.")
+        return
+
+    score = random.randint(1,100)
+
+    user1 = m.from_user.first_name
+    user2 = m.reply_to_message.from_user.first_name
+
+    bot.send_message(
+        m.chat.id,
+        f"💘 {user1} + {user2}\nCompatibilidade: {score}%"
+    )
+
+
+# ======================
+# ROLETA RUSSA
+# ======================
+
+@bot.message_handler(commands=['roletarussa'])
+def roleta(m):
+
+    if random.randint(1,6) == 3:
+
+        try:
+            bot.ban_chat_member(m.chat.id,m.from_user.id)
+            bot.send_message(m.chat.id,"💥 BANG! Você morreu na roleta.")
+        except:
+            bot.send_message(m.chat.id,"💥 BANG! Mas não consegui banir.")
+
+    else:
+        bot.send_message(m.chat.id,"😅 Clique vazio! Você sobreviveu.")
+
+
+# ======================
+# TOP COINS
+# ======================
+
+@bot.message_handler(commands=['topcoins'])
+def topcoins(m):
+
+    ranking = sorted(coins.items(), key=lambda x: x[1], reverse=True)
+
+    text = "💰 Ranking de Coins\n\n"
+
+    for i,(uid,c) in enumerate(ranking[:10],start=1):
+
+        text += f"{i}. {uid} - {c} coins\n"
+
+    bot.send_message(m.chat.id,text)
 
 # ======================
 # WELCOME / GOODBYE
@@ -592,4 +861,9 @@ def goodbye(m):
 # ======================
 # INICIAR BOT
 # ======================
-bot.polling(none_stop=True)
+while True:
+    try:
+        bot.infinity_polling(timeout=30, long_polling_timeout=10)
+    except Exception as e:
+        print("Erro:", e)
+        time.sleep(5)
