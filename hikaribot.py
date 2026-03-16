@@ -79,7 +79,6 @@ MENU = f"""
 ╰─────────────╯
 ╭─ 🌸 Sistema ─╮
 🏓 /ping - Ping do bot
-📋 /menu_completo - Ver este menu
 💌 /avatar - Ver avatar
 📌 /pin - Fixar mensagem
 📌 /unpin - Desfixar mensagem
@@ -450,7 +449,7 @@ def image(m):
 def play(m):
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(m, "⏸️ Use /play <nome da música>")
+        bot.reply_to(m, "⏸️ Use /song <nome da música>")
         return
 
     query = args[1]
