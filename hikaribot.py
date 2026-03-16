@@ -145,10 +145,16 @@ def ping(m):
 # ======================
 # XP AUTOMÁTICO
 # ======================
-@bot.message_handler(func=lambda m: m.text and not m.text.startswith("/"))
+@bot.message_handler(func=lambda m: True)
 def gain_xp(m):
+
+    if not m.text or m.text.startswith("/"):
+        return
+
     user = str(m.from_user.id)
+
     xp[user] = xp.get(user, 0) + 5
+
     save_data()
 
 # ======================
@@ -754,7 +760,7 @@ def stickertexto(m):
         bot.reply_to(m,"💛 Use: /stickertexto texto")
         return
 
-    url = f"https://dummyimage.com/512x512/000/fff.png&text={urllib.parse.quote(texto)}"
+    url = f"https://dummyimage.com/512x512/000/fff.png?text={urllib.parse.quote(texto)}"
 
     bot.send_photo(m.chat.id,url)
 
@@ -810,11 +816,17 @@ def topcoins(m):
 
     text = "💰 Ranking de Coins\n\n"
 
-    for i,(uid,c) in enumerate(ranking[:10],start=1):
+    for i, (uid, c) in enumerate(ranking[:10], start=1):
 
-        text += f"{i}. {uid} - {c} coins\n"
+        try:
+            user = bot.get_chat_member(m.chat.id, int(uid)).user
+            name = user.first_name
+        except:
+            name = uid
 
-    bot.send_message(m.chat.id,text)
+        text += f"{i}. {name} - {c} coins\n"
+
+    bot.send_message(m.chat.id, text)
 
 # ======================
 # WELCOME / GOODBYE
