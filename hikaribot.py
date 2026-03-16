@@ -104,25 +104,41 @@ def ping(m):
     bot.edit_message_text(f"🏓 Pong! {elapsed} ms", m.chat.id, msg.message_id)
 
 # ======================
-# XP
+# XP AUTOMÁTICO COM LEVEL UP
 # ======================
+
+last_xp = {}
 
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith("/"))
 def gain_xp(m):
+
     user = str(m.from_user.id)
-    xp[user] = xp.get(user, 0) + 5
+    now = time.time()
+
+    # Cooldown de 10 segundos
+    if user in last_xp and now - last_xp[user] < 10:
+        return
+
+    last_xp[user] = now
+
+    # XP atual e novo XP
+    user_xp = xp.get(user, 0)
+    xp[user] = user_xp + 5
     save_data()
 
-# ======================
-# LEVEL
-# ======================
+    # Calcula level
+    old_level = user_xp // 100
+    new_level = xp[user] // 100
 
-@bot.message_handler(commands=['level'])
-def level(m):
-    user = str(m.from_user.id)
-    user_xp = xp.get(user, 0)
-    lvl = user_xp // 100
-    bot.reply_to(m, f"⭐ {m.from_user.first_name}\nXP: {user_xp}\nLevel: {lvl}")
+    # Se subiu de level
+    if new_level > old_level:
+        try:
+            bot.send_message(
+                m.chat.id,
+                f"⭐ Parabéns {m.from_user.first_name}! Você subiu para o level {new_level}!"
+            )
+        except:
+            pass
 
 # ======================
 # RANK
@@ -135,9 +151,10 @@ def rank(m):
 
     for i, (user_id, points) in enumerate(ranking[:5], start=1):
         try:
-            name = bot.get_chat_member(m.chat.id, int(user_id)).user.first_name
+            member = bot.get_chat_member(m.chat.id, int(user_id))
+            name = member.user.first_name
         except:
-            name = user_id
+            name = "Usuário"
         text += f"{i}. {name} - {points} XP\n"
 
     bot.send_message(m.chat.id, text)
@@ -366,7 +383,10 @@ def google(m):
     msg = f"🔎 {query}\n\n"
 
     for res in results[:3]:
-        msg += f"{res['title']}\n{res['link']}\n\n"
+    title = res.get("title","Sem título")
+    link = res.get("link","")
+
+    msg += f"{title}\n{link}\n\n"
 
     bot.send_message(m.chat.id,msg)
 
@@ -463,4 +483,4 @@ Criador: {CREATOR}
 
 print("Hikari iniciado...")
 
-bot.polling(none_stop=True)
+bot.infinity_polling(timeout=60, long_polling_timeout=60)
