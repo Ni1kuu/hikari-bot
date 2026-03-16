@@ -370,24 +370,24 @@ def waifunsfw(m):
 @bot.message_handler(commands=['gifnsfw'])
 def gifnsfw(m):
     if m.chat.type != "private":
-        bot.reply_to(m, "🚫 NSFW só no privado!")
+        bot.reply_to(m, "🔞 Esse comando só funciona no privado 😏")
         return
+
     try:
-        # busca aleatória no subreddit
-        subreddit = "NSFWanime"  # ou outro subreddit de gifs NSFW
-        headers = {"User-Agent": "TelegramBot 1.0"}
-        url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=100"
-        r = requests.get(url, headers=headers, timeout=10).json()
-        posts = r.get("data", {}).get("children", [])
-        gifs = [p["data"]["url"] for p in posts if p["data"]["url"].endswith(".gif") or p["data"]["url"].endswith(".mp4")]
-        if not gifs:
-            bot.reply_to(m,"💛 Nenhum gif encontrado")
-            return
-        gif_url = random.choice(gifs)
-        bot.send_animation(m.chat.id, gif_url, caption="GIF sexy pra você 😏🔞")
+        url = "https://api.redgifs.com/v2/gifs/random"
+        r = requests.get(url).json()
+
+        gif = r["gif"]["urls"]["hd"]
+
+        bot.send_animation(
+            m.chat.id,
+            gif,
+            caption="🔥 Um GIF bem safadinho pra você..."
+        )
+
     except Exception as e:
-        print("Erro no /gifnsfw:", e)
-        bot.reply_to(m,"❌️ Erro ao pegar GIF NSFW")
+        print("Erro:", e)
+        bot.reply_to(m, "❌ Não consegui pegar o GIF agora")
 
 # ======================
 # GOOGLE / IMAGE
