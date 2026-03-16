@@ -7,9 +7,6 @@ import urllib.parse
 import json
 from telebot import types
 
-from flask import Flask, jsonify
-from threading import Thread
-
 # ======================
 # VARIÁVEIS
 # ======================
@@ -65,42 +62,7 @@ start_time = time.time()
 
 MENU = f"""
 ╭━━━ 🌼 {BOT_NAME} BOT 🌼 ━━━╮
-
-🎮 *DIVERSÃO SFW & NSFW* 💛
-💌 /gif → Gifs fofinhos de anime
-😂 /meme → Memes divertidos
-🔞 /waifunsfw → Waifu NSFW (privado)
-💖 /waifugif → Waifu GIF animada
-😈 /gifnsfw → GIF NSFW (privado)
-🎵 /play → Tocar música do YouTube
-🍑 /danbooru → Conteúdo adulto/ Family Friendly
-
-🔎 *PESQUISA* 🌟
-🔗 /google → Buscar links
-🖼 /image → Buscar imagens
-
-👤 *PERFIL* 🌷
-📸 /avatar → Ver foto de perfil
-⭐ /level → Seu nível
-🏆 /rank → Ranking de XP
-💰 /saldo → Coins atuais
-🪙 /coinflip → Cara ou coroa
-🎁 /daily → Coletar prêmio diário
-
-📌 *GRUPO* 🌈
-📌 /pin → Fixar mensagem
-❌ /unpin → Desfixar mensagens
-🎲 /dado → Jogar dado
-💕 /ship → Shipar pessoas fofinhas
-
-🛡 *MODERAÇÃO* 🐾
-🚫 /ban → Banir usuário
-⚠️ /warn → Aviso de conduta
-🔇 /mute → Mutar usuário
-🔊 /unmute → Desmutar usuário
-🧹 /limpar → Apagar mensagens
-🚨 /antilink on/off → Ativar/Desativar antilink
-
+...
 ╰━━━━━━━━━━━━━━━╯
 """
 
@@ -112,23 +74,13 @@ MENU = f"""
 def start(m):
     video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
 
-    # Mensagem fofinha do menu
     msg_text = f"""
 🌼 Bem-vindo(a) ao {BOT_NAME}! 🌼
-
 ✨ Aqui você pode se divertir, explorar e interagir comigo!
 💌 Escolha uma opção abaixo clicando nos botões:
-
-👤 Perfil → Veja seus dados
-🏓 Ping → Teste meu tempo de resposta
-🖼 Waifu → Receba uma waifu fofinha
-ℹ️ Info → Saiba mais sobre mim
-📋 Menu → Todos meus comandos 
-
 Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
 """.strip()
 
-    # Cria teclado inline com os 5 botões principais
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         types.InlineKeyboardButton("👤 Perfil", callback_data="perfil"),
@@ -138,7 +90,6 @@ Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
         types.InlineKeyboardButton("📋 Menu", callback_data="menu_completo")
     )
 
-    # Envia o vídeo com a legenda e os botões INLINE na mesma mensagem
     bot.send_video(
         m.chat.id,
         video,
@@ -146,7 +97,6 @@ Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
-
 
 # ======================
 # CALLBACK HANDLER
@@ -174,10 +124,55 @@ def callback_inline(call):
 
     elif call.data == "waifu":
         try:
-            url = waifu_request("sfw", cid)
+            url = waifu_request("sfw")
             bot.send_photo(cid, url)
         except:
             bot.send_message(cid, "💛 Erro ao pegar waifu")
+
+    elif call.data == "info":
+        uptime = int(time.time() - start_time)
+        h = uptime // 3600
+        m2 = (uptime % 3600) // 60
+        s = uptime % 60
+        bot.send_message(
+            cid,
+            f"🌻 {BOT_NAME}\nUptime: {h}h {m2}m {s}s\nVersão: {BOT_VERSION}\nCriador: {CREATOR}"
+        )
+
+    elif call.data == "menu_completo":
+        bot.send_message(cid, MENU, parse_mode="Markdown")
+
+    bot.answer_callback_query(call.id)
+
+# ======================
+# FUNÇÕES AUXILIARES
+# ======================
+
+def waifu_request(endpoint, gif=False):
+    """Retorna URL da waifu. endpoint: 'sfw' ou 'nsfw', gif: True para GIF, False para imagem"""
+    url = f"https://api.waifu.pics/{endpoint}/waifu"
+    if gif:
+        url += "/gif"
+    r = requests.get(url, timeout=10).json()
+    return r["url"]
+
+# ======================
+# COMANDOS / EXEMPLOS
+# ======================
+
+@bot.message_handler(commands=['ping'])
+def ping(m):
+    start_ping = time.time()
+    msg = bot.reply_to(m, "🏓 Pingando...")
+    elapsed = int((time.time() - start_ping) * 1000)
+    bot.edit_message_text(f"🏓 Pong! {elapsed} ms", m.chat.id, msg.message_id)
+
+@bot.message_handler(commands=['waifu'])
+def waifu_cmd(m):
+    try:
+        bot.send_photo(m.chat.id, waifu_request("sfw"), caption="💛 Uma waifu fofinha pra você!")
+    except:
+        bot.reply_to(m, "❌️ Erro ao pegar waifu")
 
     elif call.data == "info":
         uptime = int(time.time() - start_time)
