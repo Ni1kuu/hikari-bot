@@ -88,9 +88,15 @@ MENU = f"""
 
 @bot.message_handler(commands=['start'])
 def start(m):
-    img = "https://i.postimg.cc/6QDLmktT/file-00000000104871f5ab38bc387c4c1435.png"
+
+    video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
+
     try:
-        bot.send_photo(m.chat.id, img, caption=MENU)
+        bot.send_animation(
+            m.chat.id,
+            video,
+            caption=MENU
+        )
     except:
         bot.send_message(m.chat.id, MENU)
 
