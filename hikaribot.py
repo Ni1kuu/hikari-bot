@@ -370,23 +370,30 @@ def waifunsfw(m):
 @bot.message_handler(commands=['gifnsfw'])
 def gifnsfw(m):
     if m.chat.type != "private":
-        bot.reply_to(m, "🔞 Esse comando só funciona no privado 😏")
+        bot.reply_to(m, "🚫 NSFW só no privado!")
         return
 
     try:
-        url = "https://api.redgifs.com/v2/gifs/random"
-        r = requests.get(url).json()
+        # Busca GIFs NSFW de forma pública (sem login)
+        headers = {"User-Agent": "TelegramBot (by /u/seu_usuario)"}
+        r = requests.get("https://api.redgifs.com/v2/gifs/search?search_text=nsfw&count=50", headers=headers, timeout=10)
+        data = r.json()
 
-        gif = r["gif"]["urls"]["hd"]
+        gifs = data.get("gifs", [])
+        if not gifs:
+            bot.reply_to(m, "❌ Nenhum GIF encontrado")
+            return
 
-        bot.send_animation(
-            m.chat.id,
-            gif,
-            caption="🔥 Um GIF bem safadinho pra você..."
-        )
+        gif = random.choice(gifs)
+        url = gif.get("urls", {}).get("hd") or gif.get("urls", {}).get("sd")
+        if not url:
+            bot.reply_to(m, "❌ Erro ao pegar GIF")
+            return
+
+        bot.send_animation(m.chat.id, url, caption="🔥 Sexy pra você 😏🔞")
 
     except Exception as e:
-        print("Erro:", e)
+        print("Erro no /gifnsfw:", e)
         bot.reply_to(m, "❌ Não consegui pegar o GIF agora")
 
 # ======================
