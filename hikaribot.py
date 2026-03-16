@@ -202,7 +202,6 @@ def callback_inline(call):
 ╰─────────────╯
 ╭─ 🌸 Sistema ─╮
 🏓 /ping - Ping do bot
-📋 /menu_completo - Ver este menu
 💌 /avatar - Ver avatar
 📌 /pin - Fixar mensagem
 📌 /unpin - Desfixar mensagem
