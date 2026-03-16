@@ -139,7 +139,7 @@ Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
         video,
         caption=msg_text,
         reply_markup=keyboard,
-        parse_mode="Markdown"
+        parse_mode="HTML"
     )
 
 # ======================
@@ -152,12 +152,12 @@ def callback_inline(call):
     if call.data == "perfil":
         user = call.from_user
         msg = (
-    f"🌼✨ *USERINFO* ✨🌼\n\n"
-    f"👤 Nome: {user.first_name}\n"
-    f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
-    f"🆔 ID: {user.id}"
-)
-        bot.send_message(cid, msg, parse_mode="Markdown")
+            f"🌼✨ <b>USERINFO</b> ✨🌼\n\n"
+            f"👤 Nome: {user.first_name}\n"
+            f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
+            f"🆔 ID: {user.id}"
+        )
+        bot.send_message(cid, msg, parse_mode="HTML")
 
     elif call.data == "ping":
         start_ping = time.time()
@@ -170,12 +170,13 @@ def callback_inline(call):
             url = waifu_request("sfw")
             bot.send_photo(cid, url)
         except:
-            bot.send_message(cid, "❌️ Erro ao pegar waifu")
+            bot.send_message(cid, "❌ Erro ao pegar waifu")
 
     elif call.data == "info":
         bot.send_message(
             cid,
-            f"🌻 {BOT_NAME}\nUptime: {uptime_text()}\nVersão: {BOT_VERSION}\nCriador: {CREATOR}"
+            f"🌻 {BOT_NAME}\nUptime: {uptime_text()}\nVersão: {BOT_VERSION}\nCriador: {CREATOR}",
+            parse_mode="HTML"
         )
 
     elif call.data == "menu_completo":
@@ -195,9 +196,9 @@ def callback_inline(call):
 🔞 /waifunsfw - Waifu NSFW
 🔞 /gifnsfw - GIF NSFW
 🤣 /meme - Meme aleatório
-🎵 /song <música> - Buscar no YouTube
-🔍 /google <termo> - Buscar no Google
-🖼 /image <termo> - Buscar imagem
+🎵 /song &lt;música&gt; - Buscar no YouTube
+🔍 /google &lt;termo&gt; - Buscar no Google
+🖼 /image &lt;termo&gt; - Buscar imagem
 🪙 /coinflip - Jogo de coinflip
 ╰─────────────╯
 ╭─ 🌸 Sistema ─╮
@@ -212,13 +213,13 @@ def callback_inline(call):
 ⚠️ /warn - Avisar (responder)
 🔇 /mute - Mutar (responder)
 🔊 /unmute - Desmutar (responder)
-🧹 /limpar <quantidade> - Apagar mensagens
+🧹 /limpar &lt;quantidade&gt; - Apagar mensagens
 🚫 /antilink on/off - Ativar/Desativar
 ╰─────────────╯
 """
-        bot.send_message(cid, menu_text, parse_mode="Markdown")
+        bot.send_message(cid, menu_text, parse_mode="HTML")
 
-    # Sempre responder o callback para o Telegram não ficar "carregando"
+    # Responde o callback para o Telegram não ficar "carregando"
     bot.answer_callback_query(call.id)
 
 # ======================
