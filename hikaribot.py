@@ -61,30 +61,53 @@ start_time = time.time()
 # ======================
 
 MENU = f"""
-╭━━━ 🌻 {BOT_NAME} BOT 🌻 ━━━╮
+╭━━━ 🌼 {BOT_NAME} BOT 🌼 ━━━╮
 
-🎮 DIVERSÃO SFW & NSFW
-/gif • /meme • /waifunsfw • /play • /waifugif • /gifnsfw • /r34 • /danbooru
+🎮 *DIVERSÃO SFW & NSFW* 💛
+💌 /gif → Gifs fofinhos de anime
+😂 /meme → Memes divertidos
+🔞 /waifunsfw → Waifu NSFW (privado)
+💖 /waifugif → Waifu GIF animada
+😈 /gifnsfw → GIF NSFW (privado)
+🎵 /play → Tocar música do YouTube
+🍑 /r34 → Conteúdo adulto (privado)
+🖼 /danbooru → Imagens fofinhas do Danbooru
 
-🔎 PESQUISA
-/google • /image
+🔎 *PESQUISA* 🌟
+🔗 /google → Buscar links
+🖼 /image → Buscar imagens
 
-👤 PERFIL
-/avatar • /level • /rank • /saldo • /coinflip • /daily
+👤 *PERFIL* 🌷
+📸 /avatar → Ver foto de perfil
+⭐ /level → Seu nível
+🏆 /rank → Ranking de XP
+💰 /saldo → Coins atuais
+🪙 /coinflip → Cara ou coroa
+🎁 /daily → Coletar prêmio diário
 
-📌 GRUPO
-/pin • /unpin • /dado • /ship
+📌 *GRUPO* 🌈
+📌 /pin → Fixar mensagem
+❌ /unpin → Desfixar mensagens
+🎲 /dado → Jogar dado
+💕 /ship → Shipar pessoas fofinhas
 
-🛡 MODERAÇÃO
-/ban • /warn • /mute • /unmute • /limpar • /antilink on/off
+🛡 *MODERAÇÃO* 🐾
+🚫 /ban → Banir usuário
+⚠️ /warn → Aviso de conduta
+🔇 /mute → Mutar usuário
+🔊 /unmute → Desmutar usuário
+🧹 /limpar → Apagar mensagens
+🚨 /antilink on/off → Ativar/Desativar antilink
+
+╰━━━━━━━━━━━━━━━╯
 """
 
 # ======================
 # START / MENU INLINE
 # ======================
 
-@bot.message_handler(commands=['start','menu'])
-def menu(m):
+@bot.message_handler(commands=['start'])
+def start(m):
     video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
 
     # Mensagem fofinha do menu
@@ -304,51 +327,56 @@ def meme(m):
 # WAIFU (SFW / NSFW / GIFS)
 # ======================
 
-def waifu_request(endpoint, chat_id, gif=False):
+def waifu_request(endpoint, gif=False):
+    """
+    Retorna URL da waifu.
+    endpoint: 'sfw' ou 'nsfw'
+    gif: True para GIF, False para imagem
+    """
     url = f"https://api.waifu.pics/{endpoint}/waifu"
     if gif:
         url += "/gif"
     r = requests.get(url, timeout=10).json()
     return r["url"]
 
+# ----- WAIFU SFW IMAGEM -----
 @bot.message_handler(commands=['waifu'])
 def waifu(m):
     try:
-        bot.send_photo(m.chat.id, waifu_request("sfw", m.chat.id))
+        bot.send_photo(m.chat.id, waifu_request("sfw"), caption="💛 Uma waifu fofinha pra você!")
     except:
-        bot.reply_to(m,"Erro ao pegar waifu")
+        bot.reply_to(m, "❌️ Erro ao pegar waifu")
 
+# ----- WAIFU SFW GIF -----
 @bot.message_handler(commands=['waifugif'])
 def waifugif(m):
     try:
-        bot.send_animation(m.chat.id, waifu_request("sfw", m.chat.id, gif=True), caption="💛 Waifu GIF!")
+        bot.send_animation(m.chat.id, waifu_request("sfw", gif=True), caption="💛 Waifu GIF fofinha!")
     except:
-        bot.reply_to(m,"Erro ao pegar GIF 🥹")
+        bot.reply_to(m, "❌️ Erro ao pegar GIF")
 
+# ----- WAIFU NSFW IMAGEM -----
 @bot.message_handler(commands=['waifunsfw'])
 def waifunsfw(m):
     if m.chat.type != "private":
         bot.reply_to(m,"🚫 NSFW só no privado!")
         return
     try:
-        bot.send_photo(m.chat.id, waifu_request("nsfw", m.chat.id), caption="🔞😈 Waifu NSFW")
+        bot.send_photo(m.chat.id, waifu_request("nsfw"), caption="Uma waifu sexy só pra você 😏🔞")
     except:
-        bot.reply_to(m,"Erro ao pegar NSFW 🥹")
+        bot.reply_to(m,"❌️ Erro ao pegar NSFW")
 
+# ----- WAIFU NSFW GIF -----
 @bot.message_handler(commands=['gifnsfw'])
 def gifnsfw(m):
     if m.chat.type != "private":
         bot.reply_to(m, "🚫 NSFW só no privado!")
         return
-
     try:
-        # API waifu.pics retorna 'url' com GIF animado
-        r = requests.get("https://api.waifu.pics/nsfw/waifu", timeout=10).json()
-        gif_url = r["url"]
-        bot.send_animation(m.chat.id, gif_url, caption="🔞 Waifu GIF NSFW")
+        bot.send_animation(m.chat.id, waifu_request("nsfw", gif=True), caption="GIF sexy pra você 😏🔞")
     except Exception as e:
         print("Erro no /gifnsfw:", e)
-        bot.reply_to(m, "💛 Erro ao pegar GIF NSFW")
+        bot.reply_to(m, "❌️ Erro ao pegar GIF NSFW")
 
 # ======================
 # GOOGLE / IMAGE
