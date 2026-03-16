@@ -72,7 +72,7 @@ MENU = f"""
 🔞 /waifunsfw - Waifu NSFW
 🔞 /gifnsfw - GIF NSFW
 🤣 /meme - Meme aleatório
-🎬 /play <música> - Buscar no YouTube
+🎵 /song <música> - Buscar no YouTube
 🔍 /google <termo> - Buscar no Google
 🖼 /image <termo> - Buscar imagem
 🪙 /coinflip - Jogo de coinflip
@@ -408,29 +408,34 @@ def image(m):
     except:
         bot.reply_to(m,"Erro ao buscar imagem")
 
-@bot.message_handler(commands=['play'])
+@bot.message_handler(commands=['song'])
 def play(m):
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
         bot.reply_to(m, "⏸️ Use /play <nome da música>")
         return
+
     query = args[1]
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
+
     try:
         r = requests.get(url, timeout=10).json()
         items = r.get("items", [])
         if not items:
             bot.reply_to(m, "❌ Nenhum resultado encontrado")
             return
+
         video = items[0]
         title = video["snippet"]["title"]
         channel = video["snippet"]["channelTitle"]
         vid = video["id"]["videoId"]
         thumb = video["snippet"]["thumbnails"]["high"]["url"]
-        caption = f"🎵 *{title}*\n📺 {channel}\n🔗 https://youtu.be/{vid}"
+        video_url = f"https://youtu.be/{vid}"
+
+        caption = f"🎵 *{title}*\n📺 {channel}\n🔗 [Assistir/Download]({video_url})"
         bot.send_photo(m.chat.id, thumb, caption=caption, parse_mode="Markdown")
-    except:
-        bot.reply_to(m, "❌ Erro ao buscar música")
+    except Exception as e:
+        bot.reply_to(m, f"❌ Erro ao buscar música\n{e}")
 
 # ======================
 # DADO / SHIP
