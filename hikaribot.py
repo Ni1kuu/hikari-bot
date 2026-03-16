@@ -57,34 +57,13 @@ def save_data():
 start_time = time.time()
 
 # ======================
-# MENU / BOTÕES INLINE
+# START / MENU INLINE
 # ======================
 
-MENU = f"""
-╭━━━ 🌻 {BOT_NAME} BOT 🌻 ━━━╮
-
-⚙️ SISTEMA
-/start • /ping • /info
-
-🎮 DIVERSÃO SFW & NSFW
-/gif • /meme • /waifu • /waifunsfw • /play • /waifugif • /gifnsfw • /r34 • /danbooru
-
-🔎 PESQUISA
-/google • /image
-
-👤 PERFIL
-/userinfo • /avatar • /level • /rank • /saldo • /coinflip • /daily
-
-📌 GRUPO
-/pin • /unpin • /dado • /ship
-
-🛡 MODERAÇÃO
-/ban • /warn • /mute • /unmute • /limpar • /antilink on/off
-"""
-
-@bot.message_handler(commands=['menu','start'])
+@bot.message_handler(commands=['start','menu'])
 def menu(m):
-    # Teclado inline com os principais comandos
+    video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
+
     keyboard = types.InlineKeyboardMarkup(row_width=2)
 
     # Categoria Perfil
@@ -108,28 +87,54 @@ def menu(m):
         types.InlineKeyboardButton("🏓 Ping", callback_data="ping")
     )
 
-    # Categoria Moderação (apenas instruções, botões chamam texto)
+    # Categoria Moderação (apenas instruções)
     keyboard.add(
-    types.InlineKeyboardButton("🚫 Antilink", callback_data="antilink")
-)
-
-# ======================
-# START
-# ======================
-
-@bot.message_handler(commands=['start'])
-def start(m):
-
-    video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
+        types.InlineKeyboardButton("🚫 Antilink", callback_data="antilink")
+    )
 
     try:
         bot.send_animation(
             m.chat.id,
             video,
-            caption=MENU
+            caption=MENU,
+            reply_markup=keyboard
         )
     except:
-        bot.send_message(m.chat.id, MENU)
+        bot.send_message(m.chat.id, MENU, reply_markup=keyboard)
+
+
+# ======================
+# CALLBACK HANDLER
+# ======================
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_inline(call):
+    cid = call.message.chat.id
+    if call.data == "perfil":
+        bot.send_message(cid, "👤 Aqui estão seus dados do perfil!")
+    elif call.data == "avatar":
+        bot.send_message(cid, "🖼 Aqui está seu avatar!")
+    elif call.data == "saldo":
+        bot.send_message(cid, f"💰 Seu saldo: {coins.get(str(call.from_user.id),0)} coins")
+    elif call.data == "gif":
+        bot.send_message(cid, "🎮 Use /gif <termo> para procurar gifs")
+    elif call.data == "waifu":
+        bot.send_message(cid, "🖼 Use /waifu para ver waifus fofinhas")
+    elif call.data == "coinflip":
+        bot.send_message(cid, "🪙 Use /coinflip para apostar coins")
+    elif call.data == "play":
+        bot.send_message(cid, "🎵 Use /play <nome da música> para tocar")
+    elif call.data == "info":
+        uptime = int(time.time() - start_time)
+        h = uptime // 3600
+        m2 = (uptime % 3600) // 60
+        s = uptime % 60
+        bot.send_message(cid, f"🌻 {BOT_NAME}\nUptime: {h}h {m2}m {s}s\nVersão: {BOT_VERSION}\nCriador: {CREATOR}")
+    elif call.data == "ping":
+        bot.send_message(cid, "🏓 Pong!")
+    elif call.data == "antilink":
+        bot.send_message(cid, "🚫 Use /antilink on/off para ativar ou desativar")
+    bot.answer_callback_query(call.id)
 
 # ======================
 # PING
