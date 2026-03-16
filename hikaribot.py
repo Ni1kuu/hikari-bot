@@ -248,7 +248,7 @@ def waifugif(m):
     try:
         bot.send_animation(m.chat.id, waifu_request("sfw", m.chat.id, gif=True), caption="💛 Waifu GIF!")
     except:
-        bot.reply_to(m,"Erro ao pegar GIF")
+        bot.reply_to(m,"Erro ao pegar GIF 🥹")
 
 @bot.message_handler(commands=['waifunsfw'])
 def waifunsfw(m):
@@ -256,19 +256,24 @@ def waifunsfw(m):
         bot.reply_to(m,"🚫 NSFW só no privado!")
         return
     try:
-        bot.send_photo(m.chat.id, waifu_request("nsfw", m.chat.id), caption="🔞 Waifu NSFW")
+        bot.send_photo(m.chat.id, waifu_request("nsfw", m.chat.id), caption="🔞😈 Waifu NSFW")
     except:
-        bot.reply_to(m,"Erro ao pegar NSFW")
+        bot.reply_to(m,"Erro ao pegar NSFW 🥹")
 
 @bot.message_handler(commands=['gifnsfw'])
 def gifnsfw(m):
     if m.chat.type != "private":
-        bot.reply_to(m,"🚫 NSFW só no privado!")
+        bot.reply_to(m, "🚫 NSFW só no privado!")
         return
+
     try:
-        bot.send_animation(m.chat.id, waifu_request("nsfw", m.chat.id, gif=True), caption="🔞 Waifu GIF NSFW")
-    except:
-        bot.reply_to(m,"Erro ao pegar GIF NSFW")
+        # API waifu.pics retorna 'url' com GIF animado
+        r = requests.get("https://api.waifu.pics/nsfw/waifu", timeout=10).json()
+        gif_url = r["url"]
+        bot.send_animation(m.chat.id, gif_url, caption="🔞 Waifu GIF NSFW")
+    except Exception as e:
+        print("Erro no /gifnsfw:", e)
+        bot.reply_to(m, "💛 Erro ao pegar GIF NSFW")
 
 # ======================
 # GOOGLE / IMAGE
@@ -370,6 +375,44 @@ def info(m):
     s = uptime % 60
     msg = f"🌻 {BOT_NAME}\nUptime: {h}h {m2}m {s}s\nVersão: {BOT_VERSION}\nCriador: {CREATOR}"
     bot.send_message(m.chat.id,msg)
+
+# ======================
+# USERINFO
+# ======================
+@bot.message_handler(commands=['userinfo'])
+def userinfo(m):
+    # Se responder a alguém, pega os dados dessa pessoa
+    if m.reply_to_message:
+        user = m.reply_to_message.from_user
+    else:
+        user = m.from_user
+
+    msg = (
+        f"🌻 USERINFO 🌻\n\n"
+        f"Nome: {user.first_name}\n"
+        f"Username: @{user.username if user.username else 'Não possui'}\n"
+        f"ID: {user.id}\n"
+        f"Bot: {user.is_bot}"
+    )
+    bot.send_message(m.chat.id, msg)
+
+# ======================
+# AVATAR
+# ======================
+@bot.message_handler(commands=['avatar'])
+def avatar(m):
+    # Se responder a alguém, pega a foto dessa pessoa
+    if m.reply_to_message:
+        user = m.reply_to_message.from_user
+    else:
+        user = m.from_user
+
+    photos = bot.get_user_profile_photos(user.id)
+    if photos.total_count > 0:
+        # Pega a primeira foto (mais recente)
+        bot.send_photo(m.chat.id, photos.photos[0][0].file_id)
+    else:
+        bot.reply_to(m, "💛 Usuário sem foto de perfil")
 
 # ======================
 # PIN / UNPIN (ADM)
