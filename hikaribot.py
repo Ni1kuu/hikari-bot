@@ -116,7 +116,7 @@ def menu(m):
 ℹ️ Info → Saiba mais sobre mim
 
 Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
-"""
+""".strip()
 
     bot.send_message(
         m.chat.id,
@@ -142,7 +142,6 @@ def callback_inline(call):
         f"🆔 ID: {user.id}\n"
     )
     bot.send_message(cid, msg, parse_mode="Markdown")
-        bot.send_message(cid, msg)
 
     elif call.data == "ping":
         start_ping = time.time()
