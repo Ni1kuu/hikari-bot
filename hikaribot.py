@@ -92,41 +92,20 @@ def menu(m):
 
     keyboard = types.InlineKeyboardMarkup(row_width=2)
 
-    # Categoria Perfil
+    # Botões que você pediu
     keyboard.add(
         types.InlineKeyboardButton("👤 Perfil", callback_data="perfil"),
-        types.InlineKeyboardButton("🖼 Avatar", callback_data="avatar"),
-        types.InlineKeyboardButton("💰 Saldo", callback_data="saldo")
-    )
-
-    # Categoria Diversão
-    keyboard.add(
-        types.InlineKeyboardButton("🎮 GIF", callback_data="gif"),
+        types.InlineKeyboardButton("🏓 Ping", callback_data="ping"),
         types.InlineKeyboardButton("🖼 Waifu", callback_data="waifu"),
-        types.InlineKeyboardButton("🪙 Coinflip", callback_data="coinflip"),
-        types.InlineKeyboardButton("🎵 Play", callback_data="play")
+        types.InlineKeyboardButton("ℹ️ Info", callback_data="info")
     )
 
-    # Categoria Sistema
-    keyboard.add(
-        types.InlineKeyboardButton("ℹ️ Info", callback_data="info"),
-        types.InlineKeyboardButton("🏓 Ping", callback_data="ping")
-    )
-
-    # Categoria Moderação (apenas instruções)
-    keyboard.add(
-        types.InlineKeyboardButton("🚫 Antilink", callback_data="antilink")
-    )
-
-    try:
-        bot.send_animation(
-            m.chat.id,
-            video,
-            caption=MENU,
-            reply_markup=keyboard
-        )
-    except:
-        bot.send_message(m.chat.id, MENU, reply_markup=keyboard)
+    bot.send_video(
+    m.chat.id,
+    video,
+    caption=f"🌻 Bem-vindo ao {BOT_NAME}!\nEscolha uma opção abaixo:",
+    reply_markup=keyboard
+)
 
 
 # ======================
@@ -136,30 +115,38 @@ def menu(m):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     cid = call.message.chat.id
+
     if call.data == "perfil":
-        bot.send_message(cid, "👤 Aqui estão seus dados do perfil!")
-    elif call.data == "avatar":
-        bot.send_message(cid, "🖼 Aqui está seu avatar!")
-    elif call.data == "saldo":
-        bot.send_message(cid, f"💰 Seu saldo: {coins.get(str(call.from_user.id),0)} coins")
-    elif call.data == "gif":
-        bot.send_message(cid, "🎮 Use /gif <termo> para procurar gifs")
+        user = call.from_user
+        msg = (
+            f"🌻 USERINFO 🌻\n\n"
+            f"Nome: {user.first_name}\n"
+            f"Username: @{user.username if user.username else 'Não possui'}\n"
+            f"ID: {user.id}\n"
+            f"Bot: {user.is_bot}"
+        )
+        bot.send_message(cid, msg)
+
+    elif call.data == "ping":
+        start_ping = time.time()
+        msg = bot.send_message(cid, "🏓 Pingando...")
+        elapsed = int((time.time() - start_ping) * 1000)
+        bot.edit_message_text(f"🏓 Pong! {elapsed} ms", cid, msg.message_id)
+
     elif call.data == "waifu":
-        bot.send_message(cid, "🖼 Use /waifu para ver waifus fofinhas")
-    elif call.data == "coinflip":
-        bot.send_message(cid, "🪙 Use /coinflip para apostar coins")
-    elif call.data == "play":
-        bot.send_message(cid, "🎵 Use /play <nome da música> para tocar")
+        try:
+            url = waifu_request("sfw", cid)
+            bot.send_photo(cid, url)
+        except:
+            bot.send_message(cid, "💛 Erro ao pegar waifu")
+
     elif call.data == "info":
         uptime = int(time.time() - start_time)
         h = uptime // 3600
         m2 = (uptime % 3600) // 60
         s = uptime % 60
         bot.send_message(cid, f"🌻 {BOT_NAME}\nUptime: {h}h {m2}m {s}s\nVersão: {BOT_VERSION}\nCriador: {CREATOR}")
-    elif call.data == "ping":
-        bot.send_message(cid, "🏓 Pong!")
-    elif call.data == "antilink":
-        bot.send_message(cid, "🚫 Use /antilink on/off para ativar ou desativar")
+
     bot.answer_callback_query(call.id)
 
 # ======================
