@@ -4,5 +4,3 @@ Pillow
 yt-dlp
 wikipedia
 openai
-flask
-gunicorn
