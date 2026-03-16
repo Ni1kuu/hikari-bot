@@ -66,8 +66,8 @@ MENU = f"""
 ⚙️ SISTEMA
 /start • /ping • /info
 
-🎮 DIVERSÃO
-/gif • /meme • /waifu • /waifunsfw • /play • /waifugif • /gifnsfw
+🎮 DIVERSÃO SFW & NSFW
+/gif • /meme • /waifu • /waifunsfw • /play • /waifugif • /gifnsfw • /r34 • /danbooru
 
 🔎 PESQUISA
 /google • /image
