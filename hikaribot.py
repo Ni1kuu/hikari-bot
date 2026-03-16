@@ -397,6 +397,55 @@ def gifnsfw(m):
         bot.reply_to(m, "❌ Não consegui pegar o GIF agora")
 
 # ======================
+# R34 NSFW
+# ======================
+@bot.message_handler(commands=['r34'])
+def r34(m):
+    if m.chat.type != "private":
+        bot.reply_to(m, "🚫 NSFW só no privado!")
+        return
+    args = m.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(m, "💛 Use /r34 termo")
+        return
+    query = args[1].replace(" ", "_")  # query formatada
+    try:
+        url = f"https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&json=1&tags={query}"
+        r = requests.get(url, timeout=10).json()
+        if not r:
+            bot.reply_to(m,"💛 Nenhum resultado encontrado")
+            return
+        img = random.choice(r)["file_url"]
+        bot.send_photo(m.chat.id, img, caption=f"🔞 {query}")
+    except Exception as e:
+        print("Erro no /r34:", e)
+        bot.reply_to(m,"💛 Erro ao buscar imagens")
+
+# ----- DANBOORU NSFW -----
+@bot.message_handler(commands=['danbooru'])
+def danbooru(m):
+    if m.chat.type != "private":
+        bot.reply_to(m,"🚫 NSFW só no privado!")
+        return
+    args = m.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(m,"💛 Use /danbooru termo")
+        return
+    query = args[1].replace(" ", "_")
+    try:
+        url = f"https://danbooru.donmai.us/posts.json?tags={query}&limit=50"
+        r = requests.get(url, timeout=10).json()
+        if not r:
+            bot.reply_to(m,"💛 Nenhum resultado encontrado")
+            return
+        post = random.choice(r)
+        img_url = post.get("file_url") or post.get("large_file_url")
+        bot.send_photo(m.chat.id, img_url, caption=f"🔞 {query}")
+    except Exception as e:
+        print("Erro no /danbooru:", e)
+        bot.reply_to(m,"💛 Erro ao buscar imagens Danbooru")
+
+# ======================
 # GOOGLE / IMAGE
 # ======================
 
