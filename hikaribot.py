@@ -87,25 +87,9 @@ MENU = f"""
 def menu(m):
     video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
 
-    # Envia o vídeo de boas-vindas
-    bot.send_video(
-        m.chat.id,
-        video,
-        caption=f"🌸 Olá! Eu sou a {BOT_NAME}!\nBem-vindo(a) 💖"
-    )
-
-    # Cria teclado inline com os 4 botões principais
-    keyboard = types.InlineKeyboardMarkup(row_width=2)
-    keyboard.add(
-        types.InlineKeyboardButton("👤 Perfil", callback_data="perfil"),
-        types.InlineKeyboardButton("🏓 Ping", callback_data="ping"),
-        types.InlineKeyboardButton("🖼 Waifu", callback_data="waifu"),
-        types.InlineKeyboardButton("ℹ️ Info", callback_data="info")
-    )
-
     # Mensagem fofinha do menu
     msg_text = f"""
-🌼 *Bem-vindo(a) ao {BOT_NAME}!* 🌼
+🌼 Bem-vindo(a) ao {BOT_NAME}! 🌼
 
 ✨ Aqui você pode se divertir, explorar e interagir comigo!
 💌 Escolha uma opção abaixo clicando nos botões:
@@ -114,16 +98,30 @@ def menu(m):
 🏓 Ping → Teste meu tempo de resposta
 🖼 Waifu → Receba uma waifu fofinha
 ℹ️ Info → Saiba mais sobre mim
+📋 Menu → Todos meus comandos 
 
 Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
 """.strip()
 
-    bot.send_message(
+    # Cria teclado inline com os 5 botões principais
+    keyboard = types.InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        types.InlineKeyboardButton("👤 Perfil", callback_data="perfil"),
+        types.InlineKeyboardButton("🏓 Ping", callback_data="ping"),
+        types.InlineKeyboardButton("🖼 Waifu", callback_data="waifu"),
+        types.InlineKeyboardButton("ℹ️ Info", callback_data="info"),
+        types.InlineKeyboardButton("📋 Menu", callback_data="menu_completo")
+    )
+
+    # Envia o vídeo com a legenda e os botões INLINE na mesma mensagem
+    bot.send_video(
         m.chat.id,
-        msg_text,
+        video,
+        caption=msg_text,
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
+
 
 # ======================
 # CALLBACK HANDLER
@@ -161,7 +159,13 @@ def callback_inline(call):
         h = uptime // 3600
         m2 = (uptime % 3600) // 60
         s = uptime % 60
-        bot.send_message(cid, f"🌻 {BOT_NAME}\nUptime: {h}h {m2}m {s}s\nVersão: {BOT_VERSION}\nCriador: {CREATOR}")
+        bot.send_message(
+            cid,
+            f"🌻 {BOT_NAME}\nUptime: {h}h {m2}m {s}s\nVersão: {BOT_VERSION}\nCriador: {CREATOR}"
+        )
+
+    elif call.data == "menu_completo":
+        bot.send_message(cid, MENU, parse_mode="Markdown")
 
     bot.answer_callback_query(call.id)
 
