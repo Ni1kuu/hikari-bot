@@ -57,7 +57,7 @@ def save_data():
 start_time = time.time()
 
 # ======================
-# MENU
+# MENU / BOTÕES INLINE
 # ======================
 
 MENU = f"""
@@ -81,6 +81,37 @@ MENU = f"""
 🛡 MODERAÇÃO
 /ban • /warn • /mute • /unmute • /limpar • /antilink on/off
 """
+
+@bot.message_handler(commands=['menu','start'])
+def menu(m):
+    # Teclado inline com os principais comandos
+    keyboard = types.InlineKeyboardMarkup(row_width=2)
+
+    # Categoria Perfil
+    keyboard.add(
+        types.InlineKeyboardButton("👤 Perfil", callback_data="perfil"),
+        types.InlineKeyboardButton("🖼 Avatar", callback_data="avatar"),
+        types.InlineKeyboardButton("💰 Saldo", callback_data="saldo")
+    )
+
+    # Categoria Diversão
+    keyboard.add(
+        types.InlineKeyboardButton("🎮 GIF", callback_data="gif"),
+        types.InlineKeyboardButton("🖼 Waifu", callback_data="waifu"),
+        types.InlineKeyboardButton("🪙 Coinflip", callback_data="coinflip"),
+        types.InlineKeyboardButton("🎵 Play", callback_data="play")
+    )
+
+    # Categoria Sistema
+    keyboard.add(
+        types.InlineKeyboardButton("ℹ️ Info", callback_data="info"),
+        types.InlineKeyboardButton("🏓 Ping", callback_data="ping")
+    )
+
+    # Categoria Moderação (apenas instruções, botões chamam texto)
+    keyboard.add(
+    types.InlineKeyboardButton("🚫 Antilink", callback_data="antilink")
+)
 
 # ======================
 # START
