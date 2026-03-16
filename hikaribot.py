@@ -7,18 +7,16 @@ import urllib.parse
 import json
 from telebot import types
 
-----------------------
-
-VARIÁVEIS
-
-----------------------
+# ======================
+# VARIÁVEIS
+# ======================
 
 TOKEN = os.getenv("BOT_TOKEN")
 GIPHY_KEY = os.getenv("GIPHY_KEY")
 YOUTUBE_KEY = os.getenv("YOUTUBE_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
-BOT_VERSION = "2.6.3-mini"
+BOT_VERSION = "2.2.0"
 CREATOR = "@ni1ckkj"
 BOT_NAME = "Hikari"
 
@@ -30,11 +28,9 @@ entradas = {}
 
 DATA_FILE = "data.json"
 
-----------------------
-
-CARREGAR DADOS
-
-----------------------
+# ======================
+# CARREGAR DADOS
+# ======================
 
 try:
 with open(DATA_FILE, "r") as f:
@@ -49,11 +45,9 @@ daily_cooldown = {}
 
 start_time = time.time()
 
-----------------------
-
-FUNÇÃO PARA SALVAR DADOS
-
-----------------------
+# ======================
+# CARREGAR DADOS
+# ======================
 
 def save_data():
 with open(DATA_FILE, "w") as f:
@@ -63,11 +57,9 @@ json.dump({
 "daily_cooldown": daily_cooldown
 }, f)
 
-----------------------
-
-MENU
-
-----------------------
+# ======================
+# MENU
+# ======================
 
 MENU = f"""
 ╭━━━ 🌻 {BOT_NAME} BOT 🌻 ━━━╮
@@ -120,11 +112,9 @@ def start(m):
         # Caso dê algum erro no envio da imagem, envia só o menu
         bot.send_message(m.chat.id, MENU)
 
-======================
-
-PING
-
-======================
+# ======================
+# PING
+# ======================
 
 @bot.message_handler(commands=['ping'])
 def ping(m):
@@ -133,11 +123,9 @@ msg = bot.reply_to(m, "🏓 Pingando...")
 elapsed = int((time.time() - start_ping) * 1000)
 bot.edit_message_text(f"🏓 Pong! {elapsed} ms", m.chat.id, msg.message_id)
 
-======================
-
-XP AUTOMÁTICO
-
-======================
+# ======================
+# XP AUTOMÁTICO
+# ======================
 
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith("/"))
 def gain_xp(m):
@@ -145,11 +133,9 @@ user = str(m.from_user.id)
 xp[user] = xp.get(user, 0) + 5
 save_data()
 
-======================
-
-PIN / UNPIN
-
-======================
+# ======================
+# PIN / UNPIN
+# ======================
 
 @bot.message_handler(commands=['pin'])
 def pin(m):
@@ -170,11 +156,9 @@ bot.reply_to(m, "📌 Mensagens desfixadas!")
 except:
 bot.reply_to(m, "🚫 Erro ao desfixar.")
 
-======================
-
-LEVEL / RANK / COINS
-
-======================
+# ======================
+# LEVEL / RANK / COINS
+# ======================
 
 @bot.message_handler(commands=['level'])
 def level(m):
@@ -230,11 +214,9 @@ resultado = f"🪙 Coroa! Você perdeu"
 save_data()
 bot.reply_to(m, f"{resultado}\nSaldo atual: {coins[user]} coins")
 
-======================
-
-GIF / MEME
-
-======================
+# ======================
+# GIF / MEME
+# ======================
 
 @bot.message_handler(commands=['gif'])
 def gif(m):
@@ -301,11 +283,9 @@ bot.send_photo(m.chat.id, r["url"], caption=r["title"])
 except:
 bot.reply_to(m, "💛 Não consegui pegar meme.")
 
-======================
-
-USERINFO / AVATAR
-
-======================
+# ======================
+# USERINFO / AVATAR
+# ======================
 
 @bot.message_handler(commands=['userinfo'])
 def userinfo(m):
@@ -327,11 +307,9 @@ bot.send_photo(m.chat.id, photos.photos[0][0].file_id)
 else:
 bot.reply_to(m, "💛 Sem foto.")
 
-======================
-
-WAIFU IMAGEM (SFW)
-
-======================
+# ======================
+# WAIFU IMAGEM (SFW)
+# ======================
 
 @bot.message_handler(commands=['waifu'])
 def waifu(m):
@@ -341,11 +319,9 @@ bot.send_photo(m.chat.id, r["url"], caption="💛 Aqui está sua waifu!")
 except:
 bot.reply_to(m, "💛 Não consegui pegar a waifu!")
 
-======================
-
-WAIFU GIF (SFW)
-
-======================
+# ======================
+# WAIFU GIF (SFW)
+# ======================
 
 @bot.message_handler(commands=['waifugif'])
 def waifugif(m):
@@ -355,11 +331,9 @@ bot.send_animation(m.chat.id, r["url"], caption="💛 Aqui está sua waifu GIF!"
 except:
 bot.reply_to(m, "💛 Não consegui pegar o gif!")
 
-======================
-
-WAIFU NSFW (IMAGEM)
-
-======================
+# ======================
+# WAIFU NSFW (IMAGEM)
+# ======================
 
 @bot.message_handler(commands=['waifunsfw'])
 def waifunsfw(m):
@@ -374,11 +348,9 @@ try:
 except:  
     bot.reply_to(m, "💛 Não consegui pegar a waifu NSFW!")
 
-======================
-
-WAIFU NSFW GIF
-
-======================
+# ======================
+# WAIFU NSFW GIF
+# ======================
 
 @bot.message_handler(commands=['gifnsfw'])
 def gifnsfw(m):
@@ -393,11 +365,9 @@ try:
 except:  
     bot.reply_to(m, "💛 Não consegui pegar o gif NSFW!")
 
-======================
-
-MODERAÇÃO
-
-======================
+# ======================
+# MODERAÇÃO
+# ======================
 
 @bot.message_handler(commands=['ban'])
 def ban(m):
@@ -479,11 +449,9 @@ elif args[1].lower() == "off":
 antilink[m.chat.id] = False
 bot.reply_to(m, "✅ Antilink desativado")
 
-======================
-
-GOOGLE / IMAGE
-
-======================
+# ======================
+# GOOGLE / IMAGE
+# ======================
 
 @bot.message_handler(commands=['google'])
 def google(m):
@@ -525,11 +493,9 @@ bot.send_photo(m.chat.id, img["original"], caption=query)
 except:
 bot.reply_to(m, "💛 Erro ao buscar imagem.")
 
-======================
-
-PLAY (YouTube)
-
-======================
+# ======================
+# PLAY (YouTube)
+# ======================
 
 @bot.message_handler(commands=['play'])
 def play(message):
@@ -555,11 +521,9 @@ except Exception as e:
     print("Erro no /play:", e)  
     bot.reply_to(message, "💛 Erro ao buscar música.")
 
-======================
-
-DADO / SHIP
-
-======================
+# ======================
+# DADO / SHIP
+# ======================
 
 @bot.message_handler(commands=['dado'])
 def dado(m):
@@ -574,11 +538,9 @@ user1 = m.from_user.first_name
 user2 = m.reply_to_message.from_user.first_name
 bot.send_message(m.chat.id, f"💕 {user1} + {user2}\nCompatibilidade: {score}%")
 
-======================
-
-INFO (BOT)
-
-======================
+# ======================
+# INFO (BOT)
+# ======================
 
 @bot.message_handler(commands=['info'])
 def info(m):
@@ -597,11 +559,9 @@ f"🛠 Versão: {BOT_VERSION}"
 )
 bot.send_message(m.chat.id, msg)
 
-======================
-
-ANTILINK GLOBAL
-
-======================
+# ======================
+# ANTILINK GLOBAL
+# ======================
 
 @bot.message_handler(func=lambda m: True)
 def global_handler(m):
@@ -615,11 +575,9 @@ return
 except:
 pass
 
-======================
-
-WELCOME / GOODBYE
-
-======================
+# ======================
+# WELCOME / GOODBYE
+# ======================
 
 @bot.message_handler(content_types=['new_chat_members'])
 def welcome(m):
@@ -660,10 +618,8 @@ bot.send_photo(m.chat.id, "https://i.imgur.com/9XnK8YB.jpeg", caption=mensagem)
 except:
 bot.send_message(m.chat.id, mensagem)
 
-======================
-
-INICIAR BOT
-
-======================
+# ======================
+# INICIAR BOT
+# ======================
 
 bot.polling(none_stop=True)
