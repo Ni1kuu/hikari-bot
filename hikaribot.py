@@ -7,6 +7,9 @@ import urllib.parse
 import json
 from telebot import types
 
+from flask import Flask, jsonify
+from threading import Thread
+
 # ======================
 # VARIÁVEIS
 # ======================
@@ -21,6 +24,32 @@ CREATOR = "@ni1ckkj"
 BOT_NAME = "Hikari"
 
 bot = telebot.TeleBot(TOKEN)
+
+# ======================
+# SERVIDOR WEB (Railway)
+# ======================
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hikari bot online 🌸"
+
+@app.route("/r34/<tag>")
+def r34(tag):
+    try:
+        url = f"https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&json=1&tags={tag}"
+        r = requests.get(url, timeout=10).json()
+
+        images = []
+        for post in r:
+            img = post.get("file_url")
+            if img:
+                images.append(img)
+
+        return jsonify(images[:20])
+    except:
+        return jsonify({"erro": "falha ao buscar imagens"})
 
 antilink = {}
 warns = {}
@@ -231,7 +260,7 @@ def level(m):
 @bot.message_handler(commands=['addxp'])
 def addxp(m):
     user = str(m.from_user.id)
-    xp[user] = xp.get(user, 0) + 50
+    xp[user] = xp.get(user, 0) + 100
     save_data()
     bot.reply_to(m,f"✅ 100 XP adicionados! Total: {xp[user]} XP")
 
@@ -567,7 +596,7 @@ def avatar(m):
     photos = bot.get_user_profile_photos(user.id)
     if photos.total_count > 0:
         # Pega a primeira foto (mais recente)
-        bot.send_photo(m.chat.id, photos.photos[0][0].file_id)
+        bot.send_photo(m.chat.id, photos.photos[0][-1].file_id)
     else:
         bot.reply_to(m, "💛 Usuário sem foto de perfil")
 
