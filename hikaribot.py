@@ -70,8 +70,7 @@ MENU = f"""
 💖 /waifugif → Waifu GIF animada
 😈 /gifnsfw → GIF NSFW (privado)
 🎵 /play → Tocar música do YouTube
-🍑 /r34 → Conteúdo adulto (privado)
-🖼 /danbooru → Imagens fofinhas do Danbooru
+🍑 /danbooru → Conteúdo adulto/ Family Friendly
 
 🔎 *PESQUISA* 🌟
 🔗 /google → Buscar links
@@ -396,31 +395,6 @@ def gifnsfw(m):
         print("Erro no /gifnsfw:", e)
         bot.reply_to(m, "❌ Não consegui pegar o GIF agora")
 
-# ======================
-# R34 NSFW
-# ======================
-@bot.message_handler(commands=['r34'])
-def r34(m):
-    if m.chat.type != "private":
-        bot.reply_to(m, "🚫 NSFW só no privado!")
-        return
-    args = m.text.split(maxsplit=1)
-    if len(args) < 2:
-        bot.reply_to(m, "💛 Use /r34 termo")
-        return
-    query = args[1].replace(" ", "_")  # query formatada
-    try:
-        url = f"https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&json=1&tags={query}"
-        r = requests.get(url, timeout=10).json()
-        if not r:
-            bot.reply_to(m,"💛 Nenhum resultado encontrado")
-            return
-        img = random.choice(r)["file_url"]
-        bot.send_photo(m.chat.id, img, caption=f"🔞 {query}")
-    except Exception as e:
-        print("Erro no /r34:", e)
-        bot.reply_to(m,"💛 Erro ao buscar imagens")
-
 # ----- DANBOORU NSFW -----
 @bot.message_handler(commands=['danbooru'])
 def danbooru(m):
@@ -429,21 +403,21 @@ def danbooru(m):
         return
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(m,"💛 Use /danbooru termo")
+        bot.reply_to(m,"🔞 Use /danbooru termo")
         return
     query = args[1].replace(" ", "_")
     try:
         url = f"https://danbooru.donmai.us/posts.json?tags={query}&limit=50"
         r = requests.get(url, timeout=10).json()
         if not r:
-            bot.reply_to(m,"💛 Nenhum resultado encontrado")
+            bot.reply_to(m,"❌️ Nenhum resultado encontrado")
             return
         post = random.choice(r)
         img_url = post.get("file_url") or post.get("large_file_url")
         bot.send_photo(m.chat.id, img_url, caption=f"🔞 {query}")
     except Exception as e:
         print("Erro no /danbooru:", e)
-        bot.reply_to(m,"💛 Erro ao buscar imagens Danbooru")
+        bot.reply_to(m,"❌️ Erro ao buscar imagens Danbooru")
 
 # ======================
 # GOOGLE / IMAGE
@@ -492,28 +466,41 @@ def image(m):
 # ======================
 # PLAY (YouTube)
 # ======================
-
 @bot.message_handler(commands=['play'])
 def play(m):
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(m,"Use /play nome da música")
+        bot.reply_to(m, "💛 Use /play <nome da música>")
         return
+
     query = args[1]
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
+
     try:
         r = requests.get(url, timeout=10).json()
-        items = r.get("items",[])
+        items = r.get("items", [])
         if not items:
-            bot.reply_to(m,"Não encontrado")
+            bot.reply_to(m, "❌ Nenhum resultado encontrado")
             return
+
         video = items[0]
         title = video["snippet"]["title"]
         channel = video["snippet"]["channelTitle"]
         vid = video["id"]["videoId"]
-        bot.send_message(m.chat.id,f"🎵 {title}\n📺 {channel}\nhttps://youtu.be/{vid}")
-    except:
-        bot.reply_to(m,"Erro ao buscar música")
+        thumb = video["snippet"]["thumbnails"]["high"]["url"]
+
+        caption = f"🎵 *{title}*\n📺 {channel}\n🔗 https://youtu.be/{vid}"
+
+        bot.send_photo(
+            m.chat.id,
+            thumb,
+            caption=caption,
+            parse_mode="Markdown"
+        )
+
+    except Exception as e:
+        print("Erro no /play:", e)
+        bot.reply_to(m, "❌ Erro ao buscar música")
 
 # ======================
 # DADO / SHIP
