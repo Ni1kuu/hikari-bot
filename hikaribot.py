@@ -121,7 +121,7 @@ def start(m):
     msg_text = f"""
 🌼 Bem-vindo(a) ao {BOT_NAME}! 🌼
 ✨ Aqui você pode se divertir, explorar e interagir comigo!
-💌 Escolha uma opção abaixo clicando nos botões:
+💌 Clique em um botão abaixo:
 Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
 """.strip()
 
@@ -152,12 +152,11 @@ def callback_inline(call):
     if call.data == "perfil":
         user = call.from_user
         msg = (
-            f"🌼✨ *USERINFO* ✨🌼\n\n"
-            f"👤 Nome: {user.first_name}\n"
-            f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
-            f"🆔 ID: {user.id}\n"
-            f"Bot: {user.is_bot}"
-        )
+    f"🌼✨ *USERINFO* ✨🌼\n\n"
+    f"👤 Nome: {user.first_name}\n"
+    f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
+    f"🆔 ID: {user.id}"
+)
         bot.send_message(cid, msg, parse_mode="Markdown")
 
     elif call.data == "ping":
@@ -171,7 +170,7 @@ def callback_inline(call):
             url = waifu_request("sfw")
             bot.send_photo(cid, url)
         except:
-            bot.send_message(cid, "💛 Erro ao pegar waifu")
+            bot.send_message(cid, "❌️ Erro ao pegar waifu")
 
     elif call.data == "info":
         bot.send_message(
@@ -180,8 +179,46 @@ def callback_inline(call):
         )
 
     elif call.data == "menu_completo":
-        bot.send_message(cid, MENU, parse_mode="Markdown")
+        menu_text = f"""
+╭━━━ 🌼 {BOT_NAME} BOT 🌼 ━━━╮
+╭─ 🌸 Usuários ─╮
+👤 /userinfo - Info de usuário
+🧩 /level - Seu nível
+🏆 /rank - Ranking XP
+💰 /saldo - Ver coins
+🎲 /dado - Jogar dado
+💛 /ship - Shipar alguém (responder)
+╰─────────────╯
+╭─ 🌸 Diversão ─╮
+🖼 /waifu - Waifu imagem
+🎞 /waifugif - Waifu GIF
+🔞 /waifunsfw - Waifu NSFW
+🔞 /gifnsfw - GIF NSFW
+🤣 /meme - Meme aleatório
+🎵 /song <música> - Buscar no YouTube
+🔍 /google <termo> - Buscar no Google
+🖼 /image <termo> - Buscar imagem
+🪙 /coinflip - Jogo de coinflip
+╰─────────────╯
+╭─ 🌸 Sistema ─╮
+🏓 /ping - Ping do bot
+📋 /menu_completo - Ver este menu
+💌 /avatar - Ver avatar
+📌 /pin - Fixar mensagem
+📌 /unpin - Desfixar mensagem
+╰─────────────╯
+╭─ 🌸 Moderação ─╮
+🚫 /ban - Banir (responder)
+⚠️ /warn - Avisar (responder)
+🔇 /mute - Mutar (responder)
+🔊 /unmute - Desmutar (responder)
+🧹 /limpar <quantidade> - Apagar mensagens
+🚫 /antilink on/off - Ativar/Desativar
+╰─────────────╯
+"""
+        bot.send_message(cid, menu_text, parse_mode="Markdown")
 
+    # Sempre responder o callback para o Telegram não ficar "carregando"
     bot.answer_callback_query(call.id)
 
 # ======================
