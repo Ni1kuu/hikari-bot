@@ -43,6 +43,10 @@ except:
 
 start_time = time.time()
 
+# intervalo para salvar dados
+last_save = time.time()
+SAVE_INTERVAL = 30  # salva a cada 30 segundos
+
 # ----------------------
 # FUNÇÃO PARA SALVAR DADOS
 # ----------------------
@@ -148,6 +152,8 @@ def ping(m):
 @bot.message_handler(func=lambda m: True)
 def gain_xp(m):
 
+    global last_save
+
     if not m.text or m.text.startswith("/"):
         return
 
@@ -155,7 +161,10 @@ def gain_xp(m):
 
     xp[user] = xp.get(user, 0) + 5
 
-    save_data()
+    # salva apenas a cada 30 segundos
+    if time.time() - last_save > SAVE_INTERVAL:
+        save_data()
+        last_save = time.time()
 
 # ======================
 # PIN / UNPIN
