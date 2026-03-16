@@ -15,7 +15,7 @@ GIPHY_KEY = os.getenv("GIPHY_KEY")
 YOUTUBE_KEY = os.getenv("YOUTUBE_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
-BOT_VERSION = "2.2.0"
+BOT_VERSION = "2.5"
 CREATOR = "@ni1ckkj"
 BOT_NAME = "Hikari"
 
@@ -81,6 +81,8 @@ MENU = f"""
 🏓 /ping - Ping do bot
 📋 /menu_completo - Ver este menu
 💌 /avatar - Ver avatar
+📌 /pin - Fixar mensagem
+📌 /unpin - Desfixar mensagem
 ╰─────────────╯
 ╭─ 🌸 Moderação ─╮
 🚫 /ban - Banir (responder)
@@ -249,14 +251,14 @@ def daily(m):
 def coinflip(m):
     user = str(m.from_user.id)
     if coins.get(user,0) < 10:
-        bot.reply_to(m,"💛 Você precisa de 10 coins")
+        bot.reply_to(m,"🚫 Você precisa de 10 coins")
         return
     coins[user] -= 10
     if random.choice([True,False]):
         coins[user] += 20
-        result = "🪙 Cara! Você ganhou"
+        result = "🪙 Cara! Você ganhou 😎👌🏻"
     else:
-        result = "🪙 Coroa! Você perdeu"
+        result = "🪙 Coroa! Você perdeu 🫵🏻😆"
     save_data()
     bot.reply_to(m,f"{result}\nSaldo: {coins[user]}")
 
@@ -410,7 +412,7 @@ def image(m):
 def play(m):
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(m, "💛 Use /play <nome da música>")
+        bot.reply_to(m, "⏸️ Use /play <nome da música>")
         return
     query = args[1]
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
@@ -440,7 +442,7 @@ def dado(m):
 @bot.message_handler(commands=['ship'])
 def ship(m):
     if not m.reply_to_message:
-        bot.reply_to(m,"💛 Responda alguém para shippar")
+        bot.reply_to(m,"💭 Responda alguém para shippar")
         return
     score = random.randint(1,100)
     user1 = m.from_user.first_name
@@ -459,7 +461,7 @@ def userinfo(m):
         user = m.from_user
 
     msg = (
-        f"🌻 USERINFO 🌻\n\n"
+        f"✨️🌼 USERINFO 🌼✨️\n\n"
         f"Nome: {user.first_name}\n"
         f"Username: @{user.username if user.username else 'Não possui'}\n"
         f"ID: {user.id}\n"
@@ -481,7 +483,29 @@ def avatar(m):
     if photos.total_count > 0:
         bot.send_photo(m.chat.id, photos.photos[0][-1].file_id)
     else:
-        bot.reply_to(m, "💛 Usuário sem foto de perfil")
+        bot.reply_to(m, "❌️ Usuário sem foto de perfil")
+
+# ======================
+# PIN / UNPIN MENSAGEM
+# ======================
+@bot.message_handler(commands=['pin'])
+def pin(m):
+    if not m.reply_to_message:
+        bot.reply_to(m, "📋 Responda a uma mensagem para fixar.")
+        return
+    try:
+        bot.pin_chat_message(m.chat.id, m.reply_to_message.message_id)
+        bot.reply_to(m, "📌 Mensagem fixada!")
+    except:
+        bot.reply_to(m, "❌️ Não consegui fixar a mensagem.")
+
+@bot.message_handler(commands=['unpin'])
+def unpin(m):
+    try:
+        bot.unpin_chat_message(m.chat.id)
+        bot.reply_to(m, "📌 Mensagem desfixada!")
+    except:
+        bot.reply_to(m, "❌️ Não consegui desfixar a mensagem.")
 
 # ======================
 # MODERAÇÃO (BAN / WARN / MUTE / UNMUTE / LIMPAR / ANTILINK)
@@ -530,13 +554,13 @@ def unmute(m):
         bot.restrict_chat_member(m.chat.id, m.reply_to_message.from_user.id, can_send_messages=True)
         bot.reply_to(m,"🔊 Desmutado")
     except:
-        bot.reply_to(m,"💛 Não consegui desmutar")
+        bot.reply_to(m,"❌️ Não consegui desmutar")
 
 @bot.message_handler(commands=['limpar'])
 def limpar(m):
     args = m.text.split()
     if len(args) < 2:
-        bot.reply_to(m,"💛 Use: /limpar <quantidade>")
+        bot.reply_to(m,"🧹 Use: /limpar <quantidade>")
         return
     try:
         n = min(int(args[1]),50)
@@ -547,7 +571,7 @@ def limpar(m):
                 pass
         bot.reply_to(m,f"🧹 {n} mensagens apagadas")
     except:
-        bot.reply_to(m,"💛 Número inválido")
+        bot.reply_to(m,"❌️ Número inválido")
 
 @bot.message_handler(commands=['antilink'])
 def antilink_cmd(m):
