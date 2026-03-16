@@ -57,6 +57,32 @@ def save_data():
 start_time = time.time()
 
 # ======================
+# MENU / BOTÕES INLINE
+# ======================
+
+MENU = f"""
+╭━━━ 🌻 {BOT_NAME} BOT 🌻 ━━━╮
+
+⚙️ SISTEMA
+/start • /ping • /info
+
+🎮 DIVERSÃO SFW & NSFW
+/gif • /meme • /waifu • /waifunsfw • /play • /waifugif • /gifnsfw • /r34 • /danbooru
+
+🔎 PESQUISA
+/google • /image
+
+👤 PERFIL
+/userinfo • /avatar • /level • /rank • /saldo • /coinflip • /daily
+
+📌 GRUPO
+/pin • /unpin • /dado • /ship
+
+🛡 MODERAÇÃO
+/ban • /warn • /mute • /unmute • /limpar • /antilink on/off
+"""
+
+# ======================
 # START / MENU INLINE
 # ======================
 
