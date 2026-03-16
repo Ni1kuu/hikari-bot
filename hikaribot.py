@@ -373,10 +373,21 @@ def gifnsfw(m):
         bot.reply_to(m, "🚫 NSFW só no privado!")
         return
     try:
-        bot.send_animation(m.chat.id, waifu_request("nsfw", gif=True), caption="GIF sexy pra você 😏🔞")
+        # busca aleatória no subreddit
+        subreddit = "NSFWanime"  # ou outro subreddit de gifs NSFW
+        headers = {"User-Agent": "TelegramBot 1.0"}
+        url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=100"
+        r = requests.get(url, headers=headers, timeout=10).json()
+        posts = r.get("data", {}).get("children", [])
+        gifs = [p["data"]["url"] for p in posts if p["data"]["url"].endswith(".gif") or p["data"]["url"].endswith(".mp4")]
+        if not gifs:
+            bot.reply_to(m,"💛 Nenhum gif encontrado")
+            return
+        gif_url = random.choice(gifs)
+        bot.send_animation(m.chat.id, gif_url, caption="GIF sexy pra você 😏🔞")
     except Exception as e:
         print("Erro no /gifnsfw:", e)
-        bot.reply_to(m, "❌️ Erro ao pegar GIF NSFW")
+        bot.reply_to(m,"❌️ Erro ao pegar GIF NSFW")
 
 # ======================
 # GOOGLE / IMAGE
