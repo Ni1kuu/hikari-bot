@@ -134,14 +134,14 @@ def callback_inline(call):
     cid = call.message.chat.id
 
     if call.data == "perfil":
-    user = call.from_user
-    msg = (
-        f"🌼✨ *USERINFO* ✨🌼\n\n"
-        f"👤 Nome: {user.first_name}\n"
-        f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
-        f"🆔 ID: {user.id}\n"
-    )
-    bot.send_message(cid, msg, parse_mode="Markdown")
+        user = call.from_user
+        msg = (
+            f"🌼✨ *USERINFO* ✨🌼\n\n"
+            f"👤 Nome: {user.first_name}\n"
+            f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
+            f"🆔 ID: {user.id}\n"
+        )
+        bot.send_message(cid, msg, parse_mode="Markdown")
 
     elif call.data == "ping":
         start_ping = time.time()
@@ -207,7 +207,7 @@ def addxp(m):
     user = str(m.from_user.id)
     xp[user] = xp.get(user, 0) + 50
     save_data()
-    bot.reply_to(m,f"✅ 50 XP adicionados! Total: {xp[user]} XP")
+    bot.reply_to(m,f"✅ 100 XP adicionados! Total: {xp[user]} XP")
 
 # ======================
 # RANK
