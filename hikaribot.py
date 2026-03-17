@@ -117,9 +117,9 @@ def uptime_text():
 @bot.message_handler(commands=['start'])
 def start(m):
 
-    # ===== REGISTRAR USUÁRIO (COLOCA AQUI 🔥) =====
+    # ===== REGISTRAR USUÁRIO =====
     try:
-        with open("users.json", "r") as f:
+        with open("users.json", "r", encoding="utf-8") as f:
             users_db = json.load(f)
     except:
         users_db = {}
@@ -130,10 +130,11 @@ def start(m):
         users_db[user_id] = {
             "first_seen": time.strftime("%d/%m/%Y %H:%M")
         }
-        with open("users.json", "w") as f:
+        with open("users.json", "w", encoding="utf-8") as f:
             json.dump(users_db, f, indent=4)
 
     video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
+
     msg_text = f"""
 🌼 Bem-vindo(a) ao {BOT_NAME}! 🌼
 ✨ Aqui você pode se divertir, explorar e interagir comigo!
@@ -158,6 +159,7 @@ Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
         parse_mode="HTML"
     )
 
+
 # ======================
 # CALLBACK HANDLER INLINE
 # ======================
@@ -166,32 +168,31 @@ def callback_inline(call):
     cid = call.message.chat.id
 
     if call.data == "perfil":
-    user = call.from_user
-    user_id = str(user.id)
+        user = call.from_user
+        user_id = str(user.id)
 
-    # ===== XP / LEVEL =====
-    user_xp = xp.get(user_id, 0)
-    level = user_xp // 100
-    xp_next = (level + 1) * 100
+        # ===== XP / LEVEL =====
+        user_xp = xp.get(user_id, 0)
+        level = user_xp // 100
+        xp_next = (level + 1) * 100
 
-    # ===== COINS =====
-    saldo = coins.get(user_id, 0)
+        # ===== COINS =====
+        saldo = coins.get(user_id, 0)
 
-    # ===== RANK =====
-    ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
-    pos = next((i+1 for i, v in enumerate(ranking) if v[0] == user_id), "—")
+        # ===== RANK =====
+        ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
+        pos = next((i + 1 for i, v in enumerate(ranking) if v[0] == user_id), "—")
 
-    # ===== DATA (users.json) =====
-    try:
-        with open("users.json", "r") as f:
-            users_db = json.load(f)
-    except:
-        users_db = {}
+        # ===== DATA =====
+        try:
+            with open("users.json", "r", encoding="utf-8") as f:
+                users_db = json.load(f)
+        except:
+            users_db = {}
 
-    first_seen = users_db.get(user_id, {}).get("first_seen", "Desconhecido")
+        first_seen = users_db.get(user_id, {}).get("first_seen", "Desconhecido")
 
-    # ===== TEXTO =====
-    msg = f"""
+        msg = f"""
 ╭━━━ 👤 PERFIL ━━━╮
 👤 Nome: {user.first_name}
 💌 Username: @{user.username if user.username else 'Não possui'}
@@ -207,13 +208,13 @@ def callback_inline(call):
 ╰━━━━━━━━━━━━━━╯
 """
 
-    bot.send_message(cid, msg, parse_mode="HTML")
+        bot.send_message(cid, msg, parse_mode="HTML")
 
     elif call.data == "ping":
         start_ping = time.time()
-        msg = bot.send_message(cid, "🏓 Pingando...")
+        msg_ping = bot.send_message(cid, "🏓 Pingando...")
         elapsed = int((time.time() - start_ping) * 1000)
-        bot.edit_message_text(f"🏓 Pong! {elapsed} ms", cid, msg.message_id)
+        bot.edit_message_text(f"🏓 Pong! {elapsed} ms", cid, msg_ping.message_id)
 
     elif call.data == "waifu":
         try:
@@ -255,7 +256,7 @@ def callback_inline(call):
 🏓 /ping - Ping do bot
 💌 /avatar - Ver avatar
 📌 /pin - Fixar mensagem
-📌 /unpin - Desfixar mensagem
+❌️ /unpin - Desfixar mensagem
 ╰─────────────╯
 ╭─ 🌸 Moderação ─╮
 🚫 /ban - Banir (responder)
@@ -263,12 +264,11 @@ def callback_inline(call):
 🔇 /mute - Mutar (responder)
 🔊 /unmute - Desmutar (responder)
 🧹 /limpar &lt;quantidade&gt; - Apagar mensagens
-🚫 /antilink on/off - Ativar/Desativar
+🔗 /antilink on/off - Ativar/Desativar
 ╰─────────────╯
 """
         bot.send_message(cid, menu_text, parse_mode="HTML")
 
-    # Responde o callback para o Telegram não ficar "carregando"
     bot.answer_callback_query(call.id)
 
 # ======================
