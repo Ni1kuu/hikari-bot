@@ -17,7 +17,7 @@ YOUTUBE_KEY = os.getenv("YOUTUBE_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
 
-BOT_VERSION = "3.0"
+BOT_VERSION = "2.2.0"
 CREATOR = "@ni1ckkj"
 BOT_NAME = "Hikari"
 
@@ -762,7 +762,22 @@ def pin(m):
         bot.pin_chat_message(m.chat.id, m.reply_to_message.message_id)
 
     except Exception as e:
-        bot.reply_to(m, f"❌ Não consegui fixar a mensagem.\nErro: {e}")
+        bot.reply_to(m, f"❌ Ops! Não consegui desfixar a mensagem 😢.\nErro: {e}")
+
+# 📌 UNPIN
+@bot.message_handler(commands=['unpin'])
+def unpin(m):
+    try:
+        # Se respondeu a uma mensagem, desfixa ela
+        if m.reply_to_message:
+            bot.unpin_chat_message(m.chat.id, message_id=m.reply_to_message.message_id)
+            bot.reply_to(m, f"🔓 Mensagem desfixada com sucesso! 💛")
+        else:
+            # Senão, desfixa a última mensagem fixada
+            bot.unpin_chat_message(m.chat.id)
+            bot.reply_to(m, f"🔓 Última mensagem desfixada com sucesso! 💛")
+    except Exception as e:
+        bot.reply_to(m, f"❌ Ops! Não consegui desfixar a mensagem 😢\nErro: {e}")
 
 # ======================
 # MODERAÇÃO KAWAII HIKARI 🌸✨
