@@ -17,7 +17,7 @@ YOUTUBE_KEY = os.getenv("YOUTUBE_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
 
-BOT_VERSION = "2.5"
+BOT_VERSION = "3.0"
 CREATOR = "@ni1ckkj"
 BOT_NAME = "Hikari"
 
@@ -705,82 +705,74 @@ def ship(m):
     bot.send_message(m.chat.id, msg)
 
 # ======================
-# USERINFO / AVATAR
+# USERINFO ESTILO HIKARI 🌸✨
 # ======================
 @bot.message_handler(commands=['userinfo'])
 def userinfo(m):
     user = m.from_user
     user_id = str(user.id)
 
-    # Pega os dados do usuário do MongoDB
+    # Pega os dados do MongoDB
     user_data = get_user(user_id)
-
     xp = user_data.get("xp", 0)
     coins = user_data.get("coins", 0)
     first_seen = user_data.get("first_seen", "Desconhecido")
-
+    
     level = xp // 100
     xp_next = (level + 1) * 100
+    xp_in_level = xp % 100
 
     # Ranking
     ranking = list(users_collection.find().sort("xp", -1))
     pos = next((i + 1 for i, v in enumerate(ranking) if v["_id"] == user_id), "—")
 
-    msg = f"""
-╭━━━ 👤 PERFIL ━━━╮
-👤 Nome: {user.first_name}
-💌 Username: @{user.username if user.username else 'Não possui'}
-🆔 ID: {user.id}
+    # Barra de XP estilo Hikari
+    total_blocks = 10
+    filled_blocks = int((xp_in_level / 100) * total_blocks)
+    empty_blocks = total_blocks - filled_blocks
+    xp_bar = "💛" * filled_blocks + "▫️" * empty_blocks
 
-📅 Desde: {first_seen}
+    # Mensagens Hikari fofinhas
+    captions = [
+        f"🌸 Olha só quem está brilhando! {user.first_name} 🌟",
+        f"💖 Perfil fofinho de {user.first_name}! Continue arrasando!",
+        f"🐾 Yay! {user.first_name}, você está progredindo muito!",
+        f"✨ Confira o perfil de {user.first_name}! Que charme!"
+    ]
+    caption = random.choice(captions)
 
-🏆 Level: {level}
-✨ XP: {xp}/{xp_next}
-💰 Coins: {coins}
-
-🥇 Ranking: #{pos}
-╰━━━━━━━━━━━━━━╯
-"""
-    bot.reply_to(m, msg)
-
-# ======================
-# AVATAR COMPLETO
-# ======================
-@bot.message_handler(commands=['avatar'])
-def avatar(m):
-    # Define o usuário alvo: se for resposta, pega o usuário respondido, senão o próprio
-    if m.reply_to_message:
-        user = m.reply_to_message.from_user
-    else:
-        user = m.from_user
-
-    # Pega as fotos de perfil do usuário
+    # Pega a foto do usuário ou do bot como fallback
     photos = bot.get_user_profile_photos(user.id)
-
     if photos.total_count > 0:
-        # Seleciona a foto mais recente
         file_id = photos.photos[0][-1].file_id
-
-        captions = [
-            f"✨ Aqui está a foto de perfil de {user.first_name}! 🌸 Olha só que fofura!",
-            f"🖼 Olha quem apareceu! É o perfil de {user.first_name} 🌟 Muito estiloso(a)!",
-            f"👀 Dê uma olhadinha no perfil de {user.first_name}! 🔥",
-            f"📸 Foto fresquinha de {user.first_name}! Que charme 😎",
-        ]
-        caption = random.choice(captions)
-        bot.send_photo(m.chat.id, file_id, caption=caption)
-
+        bot.send_photo(
+            m.chat.id, 
+            file_id, 
+            caption=f"{caption}\n\n"
+                    f"👤 Nome: {user.first_name}\n"
+                    f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
+                    f"🆔 ID: {user.id}\n"
+                    f"📅 Desde: {first_seen}\n\n"
+                    f"🏆 Level: {level}\n"
+                    f"✨ XP: [{xp_bar}] {xp_in_level}/{100}\n"
+                    f"💰 Coins: {coins}\n"
+                    f"🥇 Ranking: #{pos}",
+            parse_mode="Markdown"
+        )
     else:
-        # Se não tiver foto, mostra a foto do bot ou grupo
-        try:
-            bot_photo = bot.get_user_profile_photos(bot.get_me().id)
-            if bot_photo.total_count > 0:
-                file_id = bot_photo.photos[0][-1].file_id
-                bot.send_photo(m.chat.id, file_id, caption="😅 Este usuário não tem foto, mas olha a minha!")
-            else:
-                bot.reply_to(m, "❌️ Usuário sem foto de perfil e eu também não tenho 😭")
-        except:
-            bot.reply_to(m, "❌️ Usuário sem foto de perfil e não consegui pegar a minha 😭")
+        bot.send_message(
+            m.chat.id,
+            f"{caption}\n\n"
+            f"👤 Nome: {user.first_name}\n"
+            f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
+            f"🆔 ID: {user.id}\n"
+            f"📅 Desde: {first_seen}\n\n"
+            f"🏆 Level: {level}\n"
+            f"✨ XP: [{xp_bar}] {xp_in_level}/{100}\n"
+            f"💰 Coins: {coins}\n"
+            f"🥇 Ranking: #{pos}",
+            parse_mode="Markdown"
+        )
 
 # ======================
 # PIN / UNPIN MENSAGEM
