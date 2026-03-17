@@ -77,9 +77,7 @@ MENU = f"""
 ╰─────────────╯
 ╭─ 🌸 Diversão ─╮
 🖼 /waifu - Waifu imagem
-🎞 /waifugif - Waifu GIF
 🔞 /waifunsfw - Waifu NSFW
-🔞 /gifnsfw - GIF NSFW
 🤣 /meme - Meme aleatório
 🎵 /song <música> - Buscar no YouTube
 🔍 /google <termo> - Buscar no Google
@@ -88,7 +86,6 @@ MENU = f"""
 ╰─────────────╯
 ╭─ 🌸 Sistema ─╮
 🏓 /ping - Ping do bot
-💌 /avatar - Ver avatar
 📌 /pin - Fixar mensagem
 📌 /unpin - Desfixar mensagem
 ╰─────────────╯
@@ -277,6 +274,18 @@ def callback_inline(call):
     bot.answer_callback_query(call.id)
 
 # ======================
+# PING
+# ======================
+@bot.message_handler(commands=['ping'])
+def ping_command(m):
+    start = time.time()
+    msg = bot.send_message(m.chat.id, "🏓 Pingando...")
+    elapsed = int((time.time() - start) * 1000)  # tempo em ms
+    bot.edit_message_text(f"🏓 Pong! {elapsed} ms",
+                          chat_id=m.chat.id,
+                          message_id=msg.message_id)
+
+# ======================
 # LEVEL / RANK / ADDXP ESTILO HIKARI 🌸✨
 # ======================
 
@@ -382,12 +391,12 @@ def coinflip(m):
         return
 
     # Paga a aposta
-    users_collection.update_one({"_id": str(user_id)}, {"$inc": {"coins": -20}})
+    users_collection.update_one({"_id": str(user_id)}, {"$inc": {"coins": -10}})
 
     # Resultado do coinflip
     if random.choice([True, False]):
-        add_coins(user_id, 40)
-        result = f"🪙 Cara! Você ganhou 40 coins 👌🏻😎"
+        add_coins(user_id, 20)
+        result = f"🪙 Cara! Você ganhou 20 coins 👌🏻😎"
     else:
         result = f"🪙 Coroa! Que pena, você perdeu 🫵🏻😆"
 
@@ -400,7 +409,7 @@ def coinflip(m):
     bot.reply_to(m, random.choice(captions))
 
 # ======================
-# WAIFU / GIF / MEME / NSFW / DANBOORU ESTILO HIKARI 🌸✨ COM RECOMPENSAS
+# WAIFU / MEME / NSFW / DANBOORU COM RECOMPENSAS
 # ======================
 
 # Função para dar XP/Coins fofinho
@@ -431,24 +440,6 @@ def waifu(m):
     except:
         bot.reply_to(m, "❌️ Hmmm, não consegui pegar uma waifu agora 😢")
 
-# Waifu GIF
-@bot.message_handler(commands=['waifugif'])
-def waifugif(m):
-    try:
-        user_id = m.from_user.id
-        url = waifu_request("sfw", gif=True)
-        captions = [
-            f"💛 Waifu GIF fofinha pra você! {m.from_user.first_name}, olha que charme! 🌸",
-            f"✨ GIF fresquinho chegando! Que lindinha 😍",
-        ]
-        bot.send_animation(m.chat.id, url, caption=random.choice(captions))
-        
-        xp_gain, coins_gain = reward_user(user_id)
-        bot.send_message(m.chat.id, f"💛 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 🌸")
-
-    except:
-        bot.reply_to(m, "❌️ Erro ao pegar GIF fofinho 😢")
-
 # Waifu NSFW
 @bot.message_handler(commands=['waifunsfw'])
 def waifunsfw(m):
@@ -460,7 +451,7 @@ def waifunsfw(m):
         url = waifu_request("nsfw")
         captions = [
             f"🔥 Hey {m.from_user.first_name}, uma waifu sexy só pra você 😏",
-            f"🔞 Surpresa safadinha! Curta com moderação 😘"
+            f"🔞 Surpresa safadinha! Curta com moderação 😈"
         ]
         bot.send_photo(m.chat.id, url, caption=random.choice(captions))
         
@@ -487,68 +478,6 @@ def meme(m):
 
     except:
         bot.reply_to(m, "❌ Erro ao pegar meme 😢")
-
-# GIF
-@bot.message_handler(commands=['gif'])
-def gif(m):
-    user_id = m.from_user.id
-    query = "anime"
-    args = m.text.split(maxsplit=1)
-    if len(args) > 1:
-        query = args[1]
-    try:
-        url = "https://api.giphy.com/v1/gifs/search"
-        params = {"api_key": GIPHY_KEY,"q": query,"limit": 25}
-        r = requests.get(url,params=params).json()
-        data = r.get("data",[])
-        if not data:
-            bot.reply_to(m,"❌ Nenhum gif encontrado 😢")
-            return
-        gif_url = random.choice(data)["images"]["original"]["url"]
-        bot.send_animation(m.chat.id,gif_url, caption=f"✨ GIF {query} fresquinho!")
-
-        xp_gain, coins_gain = reward_user(user_id)
-        bot.send_message(m.chat.id, f"💛 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 🌸")
-
-    except:
-        bot.reply_to(m,"❌ Erro ao buscar gif 😢")
-
-# ======================
-# DANBOORU / GIF NSFW COM RECOMPENSAS 🌸✨
-# ======================
-
-# GIF NSFW
-@bot.message_handler(commands=['gifnsfw'])
-def gifnsfw(m):
-    if m.chat.type != "private":
-        bot.reply_to(m, "🚫 NSFW só no privado! 😉")
-        return
-    user_id = m.from_user.id
-    try:
-        headers = {"User-Agent": "TelegramBot"}
-        r = requests.get("https://api.redgifs.com/v2/gifs/search?search_text=nsfw&count=50", headers=headers, timeout=10).json()
-        gifs = r.get("gifs", [])
-        if not gifs:
-            bot.reply_to(m, "❌ Nenhum GIF encontrado 😢")
-            return
-        gif = random.choice(gifs)
-        url = gif.get("urls", {}).get("hd") or gif.get("urls", {}).get("sd")
-        if not url:
-            bot.reply_to(m, "❌ Erro ao pegar GIF 😢")
-            return
-        captions = [
-            f"🔥 Hey {m.from_user.first_name}, um GIF sexy só pra você 😏",
-            f"🔞 Surpresinha safadinha! Curta com moderação 😉"
-        ]
-        bot.send_animation(m.chat.id, url, caption=random.choice(captions))
-        
-        # Recompensa maior por NSFW
-        xp_gain, coins_gain = reward_user(user_id, xp_min=15, xp_max=30, coins_min=15, coins_max=40)
-        bot.send_message(m.chat.id, f"🔥 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 😏")
-
-    except:
-        bot.reply_to(m, "❌ Não consegui pegar o GIF agora 😢")
-
 
 # Danbooru
 @bot.message_handler(commands=['danbooru'])
