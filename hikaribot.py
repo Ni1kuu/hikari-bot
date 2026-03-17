@@ -335,14 +335,19 @@ def addxp(m):
 # COINS / DAILY / COINFLIP ESTILO HIKARI 🌸✨
 # ======================
 
+# 💰 Ver saldo
 @bot.message_handler(commands=['saldo'])
 def saldo(m):
     user_data = get_user(m.from_user.id)
-    coins_amt = user_data.get('coins', 0)
-    msg = f"💛 Olá {m.from_user.first_name}! Seu saldo atual é: **{coins_amt} coins** 🪙\nContinue interagindo para ganhar mais!"
-    bot.reply_to(m, msg, parse_mode="Markdown")
+    coins_amount = user_data.get("coins", 0)
+    captions = [
+        f"💛 {m.from_user.first_name}, você tem {coins_amount} coins fofinhos! 🌸",
+        f"✨ Saldo atual: {coins_amount} coins 💖 Continue se divertindo!",
+        f"🐾 Olha só! {m.from_user.first_name} possui {coins_amount} coins!"
+    ]
+    bot.reply_to(m, random.choice(captions))
 
-
+# 🗓️ Daily coins
 @bot.message_handler(commands=['daily'])
 def daily(m):
     user_id = m.from_user.id
@@ -350,56 +355,49 @@ def daily(m):
     now = time.time()
     cooldown = 86400  # 24h
     last = user_data.get("daily_cooldown", 0)
-    
+
     if now - last < cooldown:
         remaining = int((cooldown - (now - last)) // 3600)
-        bot.reply_to(m, f"⏳ Você já coletou hoje! Volte em ~{remaining}h para pegar de novo.")
+        bot.reply_to(m, f"⏳ Você já coletou hoje! Volte em {remaining}h 💛")
         return
 
-    reward = random.randint(75, 200)  # valor mais divertido
+    reward = random.randint(50, 150)
     add_coins(user_id, reward)
     users_collection.update_one({"_id": str(user_id)}, {"$set": {"daily_cooldown": now}})
-    
-    messages = [
-        f"✨ Yay! Você ganhou {reward} coins hoje! 💛 Continue firme, {m.from_user.first_name}!",
-        f"💖 Moedinhas fresquinhas: {reward} coins! Aproveite seu dia! 🌸",
-        f"🌟 Daily coletado! {m.from_user.first_name}, {reward} coins chegaram para você! 🪙",
+
+    captions = [
+        f"🌸 Yay! Você ganhou {reward} coins hoje! Continue assim 💖",
+        f"💛 Dinheiro fofinho chegando! {reward} coins adicionados ao seu saldo 🌟",
+        f"🐾 Daily coletado! {reward} coins para você, {m.from_user.first_name}!"
     ]
-    bot.reply_to(m, random.choice(messages))
+    bot.reply_to(m, random.choice(captions))
 
-
+# 🪙 Coinflip estilo Hikari
 @bot.message_handler(commands=['coinflip'])
 def coinflip(m):
     user_id = m.from_user.id
     user_data = get_user(user_id)
-    coins_amt = user_data.get('coins', 0)
-    
-    if coins_amt < 10:
-        bot.reply_to(m, "🚫 Ops! Você precisa de pelo menos 10 coins para jogar.")
+    if user_data.get("coins",0) < 10:
+        bot.reply_to(m,"🚫 Você precisa de pelo menos 10 coins para jogar!")
         return
 
-    # Retira 10 coins
-    users_collection.update_one({"_id": str(user_id)}, {"$inc": {"coins": -10}})
+    # Paga a aposta
+    users_collection.update_one({"_id": str(user_id)}, {"$inc": {"coins": -20}})
 
     # Resultado do coinflip
-    win = random.choice([True, False])
-    if win:
-        reward = random.randint(15, 30)
-        add_coins(user_id, reward)
-        result_msg = f"🪙 Cara! Você ganhou {reward} coins 😎👌🏻"
+    if random.choice([True, False]):
+        add_coins(user_id, 40)
+        result = f"🪙 Cara! Você ganhou 40 coins 👌🏻😎"
     else:
-        result_msg = "🪙 Coroa! Você perdeu 🫵🏻😆"
+        result = f"🪙 Coroa! Que pena, você perdeu 🫵🏻😆"
 
-    user_data = get_user(user_id)
-    new_balance = user_data.get("coins",0)
-    
-    # Mensagens estilo Hikari
-    messages = [
-        f"{result_msg}\n💛 Saldo atual: {new_balance} coins",
-        f"🎲 Que emoção! {result_msg}\n💖 Agora você tem {new_balance} coins",
-        f"🌸 Coinflip resultado: {result_msg}\n✨ Total de coins: {new_balance}"
+    new_balance = get_user(user_id).get("coins",0)
+    captions = [
+        f"💛 {m.from_user.first_name}, {result}\nSaldo atual: {new_balance} coins 🌸",
+        f"🌟 {result} Agora você tem {new_balance} coins 💖 Continue tentando!",
+        f"🐾 Resultado do coinflip: {result}\n💛 Saldo atualizado: {new_balance}"
     ]
-    bot.reply_to(m, random.choice(messages))
+    bot.reply_to(m, random.choice(captions))
 
 # ======================
 # WAIFU / GIF / MEME / NSFW / DANBOORU ESTILO HIKARI 🌸✨ COM RECOMPENSAS
@@ -585,63 +583,72 @@ def danbooru(m):
         bot.reply_to(m,"❌️ Erro ao buscar imagens Danbooru 😢")
 
 # ======================
-# GOOGLE / IMAGE / YOUTUBE PLAY
+# GOOGLE / IMAGE / YOUTUBE PLAY 
 # ======================
+
+# Google Search
 @bot.message_handler(commands=['google'])
 def google(m):
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(m,"Use /google termo")
+        bot.reply_to(m, "🔎 Use /google termo")
         return
     query = args[1]
-    params = {"q": query,"engine":"google","api_key":SERPAPI_KEY}
+    params = {"q": query, "engine": "google", "api_key": SERPAPI_KEY}
     try:
         r = requests.get("https://serpapi.com/search", params=params, timeout=10).json()
-        results = r.get("organic_results",[])
+        results = r.get("organic_results", [])
         if not results:
-            bot.reply_to(m,"Nenhum resultado encontrado")
+            bot.reply_to(m, f"❌ Nenhum resultado encontrado para '{query}' 😢")
             return
-        msg = f"🔎 {query}\n\n"
+        msg = f"🔎 *Resultados para:* {query}\n\n"
         for res in results[:3]:
-            msg += f"{res['title']}\n{res['link']}\n\n"
-        bot.send_message(m.chat.id,msg)
-    except:
-        bot.reply_to(m,"Erro na busca")
+            msg += f"💛 {res['title']}\n🔗 {res['link']}\n\n"
+        bot.send_message(m.chat.id, msg, parse_mode="Markdown")
+    except Exception as e:
+        bot.reply_to(m, f"❌ Erro na busca 😢\n{e}")
 
+
+# Image Search
 @bot.message_handler(commands=['image'])
 def image(m):
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(m,"Use /image termo")
+        bot.reply_to(m, "🖼️ Use /image termo")
         return
     query = args[1]
-    params = {"engine":"google_images","q":query,"api_key":SERPAPI_KEY}
+    params = {"engine": "google_images", "q": query, "api_key": SERPAPI_KEY}
     try:
         r = requests.get("https://serpapi.com/search", params=params, timeout=10).json()
-        imgs = r.get("images_results",[])
+        imgs = r.get("images_results", [])
         if not imgs:
-            bot.reply_to(m,"Nenhuma imagem encontrada")
+            bot.reply_to(m, f"❌ Nenhuma imagem encontrada para '{query}' 😢")
             return
         img = random.choice(imgs)
-        bot.send_photo(m.chat.id,img["original"], caption=query)
-    except:
-        bot.reply_to(m,"Erro ao buscar imagem")
+        captions = [
+            f"💛 Olha só essa imagem de {query}! 🌸",
+            f"✨ {m.from_user.first_name}, achei isso sobre {query} 😍",
+            f"🌟 Aqui está a imagem que você pediu: {query} 💖"
+        ]
+        bot.send_photo(m.chat.id, img["original"], caption=random.choice(captions))
+    except Exception as e:
+        bot.reply_to(m, f"❌ Erro ao buscar imagem 😢\n{e}")
 
+
+# YouTube Play
 @bot.message_handler(commands=['song'])
 def play(m):
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
         bot.reply_to(m, "⏸️ Use /song <nome da música>")
         return
-
     query = args[1]
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={urllib.parse.quote_plus(query)}&key={YOUTUBE_KEY}&maxResults=1&type=video"
-
     try:
         r = requests.get(url, timeout=10).json()
         items = r.get("items", [])
         if not items:
-            bot.reply_to(m, "❌ Nenhum resultado encontrado")
+            bot.reply_to(m, f"❌ Nenhum resultado encontrado para '{query}' 😢")
             return
 
         video = items[0]
@@ -651,27 +658,51 @@ def play(m):
         thumb = video["snippet"]["thumbnails"]["high"]["url"]
         video_url = f"https://youtu.be/{vid}"
 
-        caption = f"🎵 *{title}*\n📺 {channel}\n🔗 [Assistir/Download]({video_url})"
-        bot.send_photo(m.chat.id, thumb, caption=caption, parse_mode="Markdown")
+        captions = [
+            f"🎵 *{title}*\n📺 {channel}\n🔗 [Assistir/Download]({video_url})",
+            f"💛 Música fresquinha pra você, {m.from_user.first_name}!\n🎶 {title} - {channel}\n🔗 [Link]({video_url})"
+        ]
+        bot.send_photo(m.chat.id, thumb, caption=random.choice(captions), parse_mode="Markdown")
+
     except Exception as e:
-        bot.reply_to(m, f"❌ Erro ao buscar música\n{e}")
+        bot.reply_to(m, f"❌ Erro ao buscar música 😢\n{e}")
 
 # ======================
-# DADO / SHIP
+# DADO / SHIP ESTILO HIKARI 🌸✨
 # ======================
+
+# 🎲 Dado fofinho
 @bot.message_handler(commands=['dado'])
 def dado(m):
-    bot.reply_to(m,f"🎲 {random.randint(1,6)}")
+    roll = random.randint(1, 6)
+    captions = [
+        f"🎲 {m.from_user.first_name} rolou o dado e saiu: *{roll}* 🌸",
+        f"✨ Olha só! {m.from_user.first_name} tirou {roll} no dado 💛",
+        f"💖 Yay! Número sorteado: *{roll}* para {m.from_user.first_name}!"
+    ]
+    bot.reply_to(m, random.choice(captions), parse_mode="Markdown")
 
+# 💕 Ship Hikari Style
 @bot.message_handler(commands=['ship'])
 def ship(m):
     if not m.reply_to_message:
         bot.reply_to(m,"💭 Responda alguém para shippar")
         return
-    score = random.randint(1,100)
+    score = random.randint(1, 100)
     user1 = m.from_user.first_name
     user2 = m.reply_to_message.from_user.first_name
-    bot.send_message(m.chat.id,f"💕 {user1} + {user2}\nCompatibilidade: {score}%")
+
+    # Mensagens fofas de compatibilidade
+    if score > 90:
+        msg = f"🌟 Incrível! {user1} + {user2} = {score}% compatibilidade 💛💖"
+    elif score > 70:
+        msg = f"💛 Bem combinados! {user1} + {user2} = {score}%"
+    elif score > 40:
+        msg = f"💭 Hmmm... {user1} + {user2} = {score}% compatibilidade 🌸"
+    else:
+        msg = f"😅 Meio difícil, {user1} + {user2} = {score}% 😆"
+
+    bot.send_message(m.chat.id, msg)
 
 # ======================
 # USERINFO / AVATAR
