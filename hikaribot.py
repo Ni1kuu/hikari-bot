@@ -779,6 +779,15 @@ def unpin(m):
     except Exception as e:
         bot.reply_to(m, f"❌ Ops! Não consegui desfixar a mensagem 😢\nErro: {e}")
 
+# 🗑 UNPINALL
+@bot.message_handler(commands=['unpinall'])
+def unpin_all(m):
+    try:
+        bot.unpin_all_chat_messages(m.chat.id)
+        bot.reply_to(m, f"🔓 Todas as mensagens fixadas foram desfixadas com amor! 🌼💛")
+    except Exception as e:
+        bot.reply_to(m, f"❌ Ops! Não consegui desfixar todas as mensagens 😢\nErro: {e}")
+
 # ======================
 # MODERAÇÃO KAWAII HIKARI 🌸✨
 # ======================
