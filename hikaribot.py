@@ -6,6 +6,7 @@ import time
 import urllib.parse
 import json
 from telebot import types
+from pymongo import MongoClient
 
 # ======================
 # VARIÁVEIS
@@ -14,6 +15,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 GIPHY_KEY = os.getenv("GIPHY_KEY")
 YOUTUBE_KEY = os.getenv("YOUTUBE_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+MONGO_URI = os.getenv("MONGO_URI")
 
 BOT_VERSION = "2.5"
 CREATOR = "@ni1ckkj"
@@ -25,58 +27,43 @@ antilink = {}
 warns = {}
 last_xp = {}
 
-DATA_FILE = "data.json"
-
 # ======================
-# CARREGAR DADOS
+# MONGODB
 # ======================
-xp = {}
-coins = {}
-daily_cooldown = {}
+client = MongoClient(MONGO_URI)
+db = client["hikari_bot"]
+users_collection = db["users"]
 
-# cria o arquivo automaticamente se não existir
-if not os.path.exists(DATA_FILE):
-    with open(DATA_FILE, "w") as f:
-        json.dump({
-            "xp": {},
-            "coins": {},
-            "daily_cooldown": {}
-        }, f, indent=4)
+def get_user(user_id):
+    user = users_collection.find_one({"_id": str(user_id)})
+    if not user:
+        user = {
+            "_id": str(user_id),
+            "xp": 0,
+            "coins": 0,
+            "first_seen": time.strftime("%d/%m/%Y %H:%M")
+        }
+        users_collection.insert_one(user)
+    return user
 
-# carrega os dados com segurança
-try:
-    with open(DATA_FILE, "r") as f:
-        data = json.load(f)
-        xp = data.get("xp", {})
-        coins = data.get("coins", {})
-        daily_cooldown = data.get("daily_cooldown", {})
-except:
-    # se der erro (JSON corrompido), recria tudo
-    xp = {}
-    coins = {}
-    daily_cooldown = {}
-    with open(DATA_FILE, "w") as f:
-        json.dump({
-            "xp": xp,
-            "coins": coins,
-            "daily_cooldown": daily_cooldown
-        }, f, indent=4)
+def add_xp(user_id, amount):
+    users_collection.update_one(
+        {"_id": str(user_id)},
+        {"$inc": {"xp": amount}},
+        upsert=True
+    )
 
-# ======================
-# SALVAR DADOS
-# ======================
-def save_data():
-    with open(DATA_FILE, "w") as f:
-        json.dump({
-            "xp": xp,
-            "coins": coins,
-            "daily_cooldown": daily_cooldown
-        }, f, indent=4)
+def add_coins(user_id, amount):
+    users_collection.update_one(
+        {"_id": str(user_id)},
+        {"$inc": {"coins": amount}},
+        upsert=True
+    )
 
 start_time = time.time()
 
 # ======================
-# MENU / BOTÕES INLINE
+# MENU
 # ======================
 MENU = f"""
 ╭━━━ 🌼 {BOT_NAME} BOT 🌼 ━━━╮
@@ -116,44 +103,27 @@ MENU = f"""
 """
 
 # ======================
-# FUNÇÕES AUXILIARES
+# FUNÇÕES
 # ======================
-def waifu_request(endpoint, gif=False):
-    """Retorna URL da waifu. endpoint: 'sfw' ou 'nsfw', gif: True para GIF, False para imagem"""
+def waifu_request(endpoint):
     url = f"https://api.waifu.pics/{endpoint}/waifu"
-    if gif:
-        url += "/gif"
-    r = requests.get(url, timeout=10).json()
+    r = requests.get(url).json()
     return r.get("url")
 
 def uptime_text():
     uptime = int(time.time() - start_time)
     h = uptime // 3600
-    m2 = (uptime % 3600) // 60
+    m = (uptime % 3600) // 60
     s = uptime % 60
-    return f"{h}h {m2}m {s}s"
+    return f"{h}h {m}m {s}s"
 
 # ======================
-# START / MENU INLINE
+# START
 # ======================
 @bot.message_handler(commands=['start'])
 def start(m):
 
-    # ===== REGISTRAR USUÁRIO =====
-    try:
-        with open("users.json", "r", encoding="utf-8") as f:
-            users_db = json.load(f)
-    except:
-        users_db = {}
-
-    user_id = str(m.from_user.id)
-
-    if user_id not in users_db:
-        users_db[user_id] = {
-            "first_seen": time.strftime("%d/%m/%Y %H:%M")
-        }
-        with open("users.json", "w", encoding="utf-8") as f:
-            json.dump(users_db, f, indent=4)
+    get_user(m.from_user.id)
 
     video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
 
@@ -173,17 +143,17 @@ Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
         types.InlineKeyboardButton("📋 Menu", callback_data="menu_completo")
     )
 
-    bot.send_video(
-        m.chat.id,
-        video,
-        caption=msg_text,
-        reply_markup=keyboard,
-        parse_mode="HTML"
-    )
-
+    bot.send_video(m.chat.id, video, caption=msg_text, reply_markup=keyboard)
 
 # ======================
-# CALLBACK HANDLER INLINE
+# XP AUTOMÁTICO
+# ======================
+@bot.message_handler(func=lambda m: m.text and not m.text.startswith("/"))
+def gain_xp(m):
+    add_xp(m.from_user.id, 5)
+
+# ======================
+# CALLBACKS
 # ======================
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
@@ -193,26 +163,18 @@ def callback_inline(call):
         user = call.from_user
         user_id = str(user.id)
 
-        # ===== XP / LEVEL =====
-        user_xp = xp.get(user_id, 0)
-        level = user_xp // 100
+        user_data = get_user(user.id)
+
+        xp = user_data.get("xp", 0)
+        coins = user_data.get("coins", 0)
+
+        level = xp // 100
         xp_next = (level + 1) * 100
 
-        # ===== COINS =====
-        saldo = coins.get(user_id, 0)
+        ranking = list(users_collection.find().sort("xp", -1))
+        pos = next((i+1 for i, v in enumerate(ranking) if v["_id"] == user_id), "—")
 
-        # ===== RANK =====
-        ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
-        pos = next((i + 1 for i, v in enumerate(ranking) if v[0] == user_id), "—")
-
-        # ===== DATA =====
-        try:
-            with open("users.json", "r", encoding="utf-8") as f:
-                users_db = json.load(f)
-        except:
-            users_db = {}
-
-        first_seen = users_db.get(user_id, {}).get("first_seen", "Desconhecido")
+        first_seen = user_data.get("first_seen", "Desconhecido")
 
         msg = f"""
 ╭━━━ 👤 PERFIL ━━━╮
@@ -223,14 +185,14 @@ def callback_inline(call):
 📅 Desde: {first_seen}
 
 🏆 Level: {level}
-✨ XP: {user_xp}/{xp_next}
-💰 Coins: {saldo}
+✨ XP: {xp}/{xp_next}
+💰 Coins: {coins}
 
 🥇 Ranking: #{pos}
 ╰━━━━━━━━━━━━━━╯
 """
 
-        bot.send_message(cid, msg, parse_mode="HTML")
+        bot.send_message(cid, msg)
 
     elif call.data == "ping":
         start_ping = time.time()
@@ -243,53 +205,16 @@ def callback_inline(call):
             url = waifu_request("sfw")
             bot.send_photo(cid, url)
         except:
-            bot.send_message(cid, "❌ Erro ao pegar waifu")
+            bot.send_message(cid, "Erro ao pegar waifu")
 
     elif call.data == "info":
         bot.send_message(
             cid,
-            f"🌻 {BOT_NAME}\nUptime: {uptime_text()}\nVersão: {BOT_VERSION}\nCriador: {CREATOR}",
-            parse_mode="HTML"
+            f"{BOT_NAME}\nUptime: {uptime_text()}\nVersão: {BOT_VERSION}"
         )
 
     elif call.data == "menu_completo":
-        menu_text = f"""
-╭━━━ 🌼 {BOT_NAME} BOT 🌼 ━━━╮
-╭─ 🌸 Usuários ─╮
-👤 /userinfo - Info de usuário
-🧩 /level - Seu nível
-🏆 /rank - Ranking XP
-💰 /saldo - Ver coins
-🎲 /dado - Jogar dado
-💛 /ship - Shipar alguém (responder)
-╰─────────────╯
-╭─ 🌸 Diversão ─╮
-🖼 /waifu - Waifu imagem
-🎞 /waifugif - Waifu GIF
-🔞 /waifunsfw - Waifu NSFW
-🔞 /gifnsfw - GIF NSFW
-🤣 /meme - Meme aleatório
-🎵 /song &lt;música&gt; - Buscar no YouTube
-🔍 /google &lt;termo&gt; - Buscar no Google
-🖼 /image &lt;termo&gt; - Buscar imagem
-🪙 /coinflip - Jogo de coinflip
-╰─────────────╯
-╭─ 🌸 Sistema ─╮
-🏓 /ping - Ping do bot
-💌 /avatar - Ver avatar
-📌 /pin - Fixar mensagem
-❌️ /unpin - Desfixar mensagem
-╰─────────────╯
-╭─ 🌸 Moderação ─╮
-🚫 /ban - Banir (responder)
-⚠️ /warn - Avisar (responder)
-🔇 /mute - Mutar (responder)
-🔊 /unmute - Desmutar (responder)
-🧹 /limpar &lt;quantidade&gt; - Apagar mensagens
-🔗 /antilink on/off - Ativar/Desativar
-╰─────────────╯
-"""
-        bot.send_message(cid, menu_text, parse_mode="HTML")
+        bot.send_message(cid, MENU)
 
     bot.answer_callback_query(call.id)
 
