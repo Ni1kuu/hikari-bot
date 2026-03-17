@@ -146,11 +146,69 @@ Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
     bot.send_video(m.chat.id, video, caption=msg_text, reply_markup=keyboard)
 
 # ======================
-# XP AUTOMÁTICO
+# XP AUTOMÁTICO ESTILO HIKARI 🌸✨
 # ======================
+last_xp_time = {}
+msg_count = {}
+
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith("/"))
 def gain_xp(m):
-    add_xp(m.from_user.id, 5)
+    user_id = m.from_user.id
+    now = time.time()
+
+    # ⏳ Cooldown de 10s por usuário
+    if user_id in last_xp_time and now - last_xp_time[user_id] < 10:
+        return
+    last_xp_time[user_id] = now
+
+    # Contador de mensagens
+    msg_count[user_id] = msg_count.get(user_id, 0) + 1
+
+    # Só dá XP visível a cada 5 mensagens
+    give_xp = False
+    if msg_count[user_id] >= 5:
+        give_xp = True
+        msg_count[user_id] = 0
+
+    # 🎯 XP base + bônus por tamanho da mensagem
+    base_xp = random.randint(15, 25)  # XP maior
+    bonus = len(m.text) // 15          # +1 XP a cada 15 caracteres
+    xp_gain = base_xp + bonus
+
+    # XP aleatório bônus kawaii (10% de chance)
+    bonus_msg = ""
+    if random.random() < 0.1:
+        xp_gain += random.randint(20, 35)
+        bonus_msg = "✨ Surpresinha de XP! ✨"
+
+    # Adiciona XP ao usuário
+    user_data = get_user(user_id)
+    current_xp = user_data.get("xp", 0)
+    current_level = current_xp // 100
+    add_xp(user_id, xp_gain)
+    user_data = get_user(user_id)
+    new_xp = user_data.get("xp", 0)
+    new_level = new_xp // 100
+
+    # ⚡ Level Up Hikari Style
+    if new_level > current_level:
+        level_up_msgs = [
+            f"🎉 Yay! {m.from_user.first_name} subiu para o **Level {new_level}**! 🌸",
+            f"✨ Woohoo! Você está mais forte agora, {m.from_user.first_name}! **Level {new_level}** alcançado! 💖",
+            f"💛 Olha só! {m.from_user.first_name} evoluiu! **Level {new_level}** desbloqueado! 🐾",
+            f"🌟 Parabéns, {m.from_user.first_name}! Seu esforço rendeu frutos! **Level {new_level}**! 🎀"
+        ]
+        msg = random.choice(level_up_msgs)
+        if bonus_msg:
+            msg += f"\n{bonus_msg}"
+        bot.send_message(m.chat.id, msg, parse_mode="Markdown")
+
+    # Mensagem XP normal (só a cada 5 msgs)
+    elif give_xp:
+        xp_msg = f"💛 {m.from_user.first_name} ganhou {xp_gain} XP! Total: {new_xp} XP."
+        if bonus_msg:
+            xp_msg += f"\n{bonus_msg}"
+        bot.send_message(m.chat.id, xp_msg)
 
 # ======================
 # CALLBACKS
