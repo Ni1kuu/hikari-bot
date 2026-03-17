@@ -738,110 +738,169 @@ def pin(m):
         bot.reply_to(m, "📋 Responda a uma mensagem para fixar.")
         return
     try:
+        # URL do GIF hospedado no GitHub (raw)
+        gif_url = "https://github.com/Ni1kuu/hikari-bot/raw/main/PinDown.io_%40blackirisblog_1773786904.gif"
+
+        # Pega o texto da mensagem original
+        original_text = m.reply_to_message.text or "📎 Sem texto"
+
+        # Legenda melhorada
+        caption = (
+            f"📌 *Mensagem fofinha fixada!* 💛\n"
+            f"💌 Quem fixou: {m.from_user.first_name}\n\n"
+            f"📝 Conteúdo:\n{original_text}"
+        )
+
+        # Envia o GIF com a legenda
+        bot.send_animation(
+            chat_id=m.chat.id,
+            animation=gif_url,
+            caption=caption,
+            parse_mode="Markdown"
+        )
+
+        # Tenta fixar a mensagem original
         bot.pin_chat_message(m.chat.id, m.reply_to_message.message_id)
-        bot.reply_to(m, "📌 Mensagem fixada!")
-    except:
-        bot.reply_to(m, "❌️ Não consegui fixar a mensagem.")
 
-@bot.message_handler(commands=['unpin'])
-def unpin(m):
-    try:
-        bot.unpin_chat_message(m.chat.id)
-        bot.reply_to(m, "📌 Mensagem desfixada!")
-    except:
-        bot.reply_to(m, "❌️ Não consegui desfixar a mensagem.")
+    except Exception as e:
+        bot.reply_to(m, f"❌ Não consegui fixar a mensagem.\nErro: {e}")
 
 # ======================
-# MODERAÇÃO (BAN / WARN / MUTE / UNMUTE / LIMPAR / ANTILINK)
+# MODERAÇÃO KAWAII HIKARI 🌸✨
 # ======================
+
+# 🚫 BAN
 @bot.message_handler(commands=['ban'])
 def ban(m):
     if not m.reply_to_message:
-        bot.reply_to(m,"💛 Responda alguém para banir")
+        bot.reply_to(m, "💛 Responda alguém para banir fofinho! ✨")
         return
     try:
-        bot.ban_chat_member(m.chat.id, m.reply_to_message.from_user.id)
-        bot.reply_to(m,"🚫 Usuário banido")
-    except:
-        bot.reply_to(m,"💛 Não consegui banir")
+        target = m.reply_to_message.from_user
+        bot.ban_chat_member(m.chat.id, target.id)
+        bot.reply_to(m, f"🚫 Putz! {target.first_name} foi banido! 💨\nNão se preocupe, Hikari cuida do grupo 🌸")
+    except Exception as e:
+        bot.reply_to(m, f"💛 Ops! Não consegui banir {target.first_name} 😢\nErro: {e}")
 
+
+# ⚠️ WARN
 @bot.message_handler(commands=['warn'])
 def warn(m):
     if not m.reply_to_message:
-        bot.reply_to(m,"💛 Responda alguém para avisar")
+        bot.reply_to(m, "💛 Responda alguém para avisar fofinho! ✨")
         return
     uid = m.reply_to_message.from_user.id
-    warns[uid] = warns.get(uid,0) + 1
-    bot.reply_to(m,f"⚠️ Aviso para {m.reply_to_message.from_user.first_name}\nTotal: {warns[uid]}")
-    if warns[uid] >= 3:
+    target_name = m.reply_to_message.from_user.first_name
+    warns[uid] = warns.get(uid, 0) + 1
+    total_warns = warns[uid]
+
+    bot.reply_to(m, f"⚠️ {target_name}, você recebeu um aviso!\nTotal de avisos: {total_warns} 💛")
+
+    if total_warns >= 3:
         try:
             bot.ban_chat_member(m.chat.id, uid)
-            bot.send_message(m.chat.id,"🚫 Banido por 3 avisos")
-        except:
-            pass
+            bot.send_message(m.chat.id, f"🚫 {target_name} foi banido por acumular 3 avisos! 💨\nHikari não deixa bagunça no grupo 🌸")
+            warns[uid] = 0  # Resetar avisos após ban
+        except Exception as e:
+            bot.send_message(m.chat.id, f"💛 Não consegui banir {target_name} 😢\nErro: {e}")
 
+
+# 🔇 MUTE
 @bot.message_handler(commands=['mute'])
 def mute(m):
     if not m.reply_to_message:
+        bot.reply_to(m, "💛 Responda alguém para mutar! 🤫")
         return
     try:
-        bot.restrict_chat_member(m.chat.id, m.reply_to_message.from_user.id, can_send_messages=False)
-        bot.reply_to(m,"🔇 Mutado")
-    except:
-        bot.reply_to(m,"💛 Não consegui mutar")
+        target = m.reply_to_message.from_user
+        bot.restrict_chat_member(m.chat.id, target.id, can_send_messages=False)
+        bot.reply_to(m, f"🔇 Shhh! {target.first_name} foi mutado com carinho 🌸")
+    except Exception as e:
+        bot.reply_to(m, f"💛 Não consegui mutar {target.first_name} 😢\nErro: {e}")
 
+
+# 🔊 UNMUTE
 @bot.message_handler(commands=['unmute'])
 def unmute(m):
     if not m.reply_to_message:
+        bot.reply_to(m, "💛 Responda alguém para desmutar! 🎶")
         return
     try:
-        bot.restrict_chat_member(m.chat.id, m.reply_to_message.from_user.id, can_send_messages=True)
-        bot.reply_to(m,"🔊 Desmutado")
-    except:
-        bot.reply_to(m,"❌️ Não consegui desmutar")
+        target = m.reply_to_message.from_user
+        bot.restrict_chat_member(m.chat.id, target.id, can_send_messages=True)
+        bot.reply_to(m, f"🔊 Yay! {target.first_name} foi desmutado! 🌸 Volte a conversar 🥰")
+    except Exception as e:
+        bot.reply_to(m, f"❌️ Ops! Não consegui desmutar {target.first_name} 😢\nErro: {e}")
 
+
+# 🧹 LIMPAR MENSAGENS
 @bot.message_handler(commands=['limpar'])
 def limpar(m):
     args = m.text.split()
     if len(args) < 2:
-        bot.reply_to(m,"🧹 Use: /limpar <quantidade>")
+        bot.reply_to(m, "🧹 Use: /limpar <quantidade> (máx 50) 🌸")
         return
     try:
-        n = min(int(args[1]),50)
+        n = min(int(args[1]), 50)
         for i in range(n):
             try:
-                bot.delete_message(m.chat.id,m.message_id-i)
+                bot.delete_message(m.chat.id, m.message_id - i)
             except:
                 pass
-        bot.reply_to(m,f"🧹 {n} mensagens apagadas")
-    except:
-        bot.reply_to(m,"❌️ Número inválido")
+        bot.reply_to(m, f"🧹 {n} mensagens apagadas com amor! 💛✨")
+    except ValueError:
+        bot.reply_to(m, "❌️ Número inválido 😢")
 
+
+# 🚫 ANTILINK
 @bot.message_handler(commands=['antilink'])
 def antilink_cmd(m):
     args = m.text.split()
     if len(args) < 2:
+        bot.reply_to(m, "💡 Use: /antilink on ou /antilink off 🌸")
         return
+
     if args[1].lower() == "on":
         antilink[m.chat.id] = True
-        bot.reply_to(m,"🚫 Antilink ativado")
+        bot.reply_to(m, "🚫 Antilink ativado! Hikari protegerá o grupo de links indesejados 💛✨")
     elif args[1].lower() == "off":
         antilink[m.chat.id] = False
-        bot.reply_to(m,"✅ Antilink desativado")
+        bot.reply_to(m, "✅ Antilink desativado! Agora links são permitidos 😉🌸")
+    else:
+        bot.reply_to(m, "💡 Comando inválido! Use /antilink on ou /antilink off 😅")
 
 # ======================
-# GLOBAL HANDLER (ANTILINK)
+# GLOBAL HANDLER (ANTILINK) 🌸
 # ======================
+ANTILINK_GIF = "https://forum.treeofsavior.com/uploads/default/original/3X/b/6/b6486d06486a05685b50e01a3c83e44a17b9ba42.gif"
+
 @bot.message_handler(func=lambda m: True)
 def global_handler(m):
-    if m.text and antilink.get(m.chat.id):
-        if "http" in m.text or "t.me" in m.text:
+    if not m.text:
+        return
+
+    if antilink.get(m.chat.id):
+        forbidden = ["http://", "https://", "t.me/"]
+        if any(f in m.text.lower() for f in forbidden):
             try:
-                bot.delete_message(m.chat.id,m.message_id)
-                bot.ban_chat_member(m.chat.id,m.from_user.id)
-                bot.send_message(m.chat.id,"🚫 Link proibido!")
-            except:
-                pass
+                # deleta a mensagem com link
+                bot.delete_message(m.chat.id, m.message_id)
+
+                # tenta banir o usuário
+                bot.ban_chat_member(m.chat.id, m.from_user.id)
+
+                # envia o GIF com legenda cute
+                bot.send_animation(
+                    m.chat.id,
+                    ANTILINK_GIF,
+                    caption=(
+                        f"🚫 Oops! {m.from_user.first_name}, links não são permitidos 🌸\n"
+                        "Hikari protege o grupo! 💛"
+                    )
+                )
+
+            except Exception as e:
+                print(f"Erro no antilink: {e}")
 
 # ======================
 # WELCOME / GOODBYE
@@ -849,23 +908,31 @@ def global_handler(m):
 @bot.message_handler(content_types=['new_chat_members'])
 def welcome(m):
     for user in m.new_chat_members:
-        hora = time.strftime("%H:%M")
-        msg = f"🌼 Bem-vindo {user.first_name}!\n🕒 Entrou às: {hora}"
+        hora = time.strftime("%d.%m.%y %H:%M")  # Data e hora completas
+        msg = f"🌼 Bem-vindo {user.first_name}!\n🕒 Entrou em: {hora}"
         try:
-            bot.send_photo(m.chat.id,"https://i.imgur.com/9XnK8YB.jpeg",caption=msg)
+            bot.send_animation(
+                m.chat.id,
+                "https://media.tenor.com/pt-BR/view/welcome-new-members-senko-san-cute-anime-welcome-gif-26050520.gif",
+                caption=msg
+            )
         except:
-            bot.send_message(m.chat.id,msg)
+            bot.send_message(m.chat.id, msg)
 
 @bot.message_handler(content_types=['left_chat_member'])
 def goodbye(m):
     user = m.left_chat_member
     if user:
-        hora = time.strftime("%H:%M")
-        msg = f"🌼 {user.first_name} saiu do grupo às {hora}"
+        hora = time.strftime("%d.%m.%y %H:%M")  # Data e hora completas
+        msg = f"🌼 {user.first_name} saiu do grupo em: {hora}"
         try:
-            bot.send_photo(m.chat.id,"https://i.imgur.com/9XnK8YB.jpeg",caption=msg)
+            bot.send_animation(
+                m.chat.id,
+                "https://media.tenor.com/pt-BR/view/anime-roka-shibasaki-%E6%9F%B4%E5%B4%8E-%E8%8A%A6%E8%8A%B1-gif-13007334342926281309.gif",
+                caption=msg
+            )
         except:
-            bot.send_message(m.chat.id,msg)
+            bot.send_message(m.chat.id, msg)
 
 # ======================
 # INICIAR BOT
