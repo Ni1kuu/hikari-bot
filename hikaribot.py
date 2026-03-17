@@ -229,7 +229,16 @@ def callback_inline(call):
         ranking = list(users_collection.find().sort("xp", -1))
         pos = next((i+1 for i, v in enumerate(ranking) if v["_id"] == user_id), "—")
 
-        first_seen = user_data.get("first_seen", "Desconhecido")
+        # Converte a data do MongoDB para o formato DD.MM.YY HH:MM
+        first_seen_raw = user_data.get("first_seen", None)
+        if first_seen_raw:
+            try:
+                first_seen_struct = time.strptime(first_seen_raw, "%d/%m/%Y %H:%M")
+                first_seen = time.strftime("%d.%m.%y %H:%M", first_seen_struct)
+            except:
+                first_seen = first_seen_raw
+        else:
+            first_seen = "Desconhecido"
 
         msg = f"""
 ╭━━━ 👤 PERFIL ━━━╮
@@ -246,7 +255,6 @@ def callback_inline(call):
 🥇 Ranking: #{pos}
 ╰━━━━━━━━━━━━━━╯
 """
-
         bot.send_message(cid, msg)
 
     elif call.data == "ping":
@@ -256,17 +264,35 @@ def callback_inline(call):
         bot.edit_message_text(f"🏓 Pong! {elapsed} ms", cid, msg_ping.message_id)
 
     elif call.data == "waifu":
-        try:
-            url = waifu_request("sfw")
-            bot.send_photo(cid, url)
-        except:
-            bot.send_message(cid, "Erro ao pegar waifu")
+    try:
+        user_id = call.from_user.id
+        url = waifu_request("sfw")  # pega a waifu
+        captions = [
+            f"💛 Olha só que fofura, {call.from_user.first_name}! Uma waifu só pra você! 🌸",
+            f"✨ Surpresa kawaii! Aqui vai uma waifu linda pra alegrar seu dia 💖",
+            f"🌟 Um presentinho especial: waifu fresquinha para {call.from_user.first_name}! 🐾"
+        ]
+        bot.send_photo(cid, url, caption=random.choice(captions))
+
+        # 💛 Recompensa Hikari Style
+        xp_gain = random.randint(5,15)
+        coins_gain = random.randint(5,20)
+        add_xp(user_id, xp_gain)
+        add_coins(user_id, coins_gain)
+        bot.send_message(cid, f"💛 {call.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins só por interagir com a waifu! 🌸")
+
+    except Exception as e:
+        bot.send_message(cid, f"❌️ Hmmm, não consegui pegar uma waifu agora 😢\n{e}")
 
     elif call.data == "info":
-        bot.send_message(
-            cid,
-            f"{BOT_NAME}\nUptime: {uptime_text()}\nVersão: {BOT_VERSION}"
-        )
+    msg = (
+        f"🌸 **{BOT_NAME} Info** 🌸\n\n"
+        f"⏱️ Uptime: {uptime_text()}\n"
+        f"🛠️ Versão: {BOT_VERSION}\n"
+        f"👤 Criador: {CREATOR}\n"
+        f"💖 Divirta-se e interaja comigo!"
+    )
+    bot.send_message(cid, msg, parse_mode="Markdown")
 
     elif call.data == "menu_completo":
         bot.send_message(cid, MENU)
@@ -844,5 +870,6 @@ def goodbye(m):
 # ======================
 # INICIAR BOT
 # ======================
-print(f"{BOT_NAME} iniciado...")
+bot.remove_webhook()
+print(f"🤖 {BOT_NAME} iniciado com sucesso! Rodando polling...")
 bot.infinity_polling(timeout=60, long_polling_timeout=60)
