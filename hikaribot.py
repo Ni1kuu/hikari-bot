@@ -277,16 +277,8 @@ def callback_inline(call):
     bot.answer_callback_query(call.id)
 
 # ======================
-# XP / LEVEL / RANK
+# LEVEL / RANK / ADDXP ESTILO HIKARI 🌸✨
 # ======================
-@bot.message_handler(func=lambda m: m.text and not m.text.startswith("/"))
-def gain_xp(m):
-    user_id = m.from_user.id
-    now = time.time()
-    if user_id in last_xp and now - last_xp[user_id] < 10:
-        return
-    last_xp[user_id] = now
-    add_xp(user_id, 5)
 
 @bot.message_handler(commands=['level'])
 def level(m):
@@ -294,19 +286,29 @@ def level(m):
     user_data = get_user(user_id)
     user_xp = user_data.get("xp", 0)
     lvl = user_xp // 100
-    bot.reply_to(m, f"⭐ {m.from_user.first_name}\nXP: {user_xp}\nLevel: {lvl}")
+    next_level_xp = (lvl + 1) * 100
+    xp_current = user_xp - (lvl * 100)
+    xp_needed = next_level_xp - (lvl * 100)
 
-@bot.message_handler(commands=['addxp'])
-def addxp(m):
-    user_id = m.from_user.id
-    add_xp(user_id, 100)
-    user_data = get_user(user_id)
-    bot.reply_to(m, f"✅ 100 XP adicionados! Total: {user_data.get('xp',0)} XP")
+    # Barra de XP: 10 blocos
+    total_blocks = 10
+    filled_blocks = int((xp_current / xp_needed) * total_blocks)
+    empty_blocks = total_blocks - filled_blocks
+    progress_bar = "💛" * filled_blocks + "▫️" * empty_blocks
+
+    msg = (
+        f"⭐ {m.from_user.first_name}\n"
+        f"Level: {lvl}\n"
+        f"XP: {xp_current}/{xp_needed}\n"
+        f"{progress_bar}"
+    )
+    bot.reply_to(m, msg)
+
 
 @bot.message_handler(commands=['rank'])
 def rank(m):
     ranking = list(users_collection.find().sort("xp", -1))
-    text = "🏆 Ranking\n\n"
+    text = "🏆 Top 5 Hikari Friends\n\n"
     for i, user_data in enumerate(ranking[:5], start=1):
         try:
             member = bot.get_chat_member(m.chat.id, int(user_data["_id"]))
@@ -316,109 +318,182 @@ def rank(m):
         text += f"{i}. {name} - {user_data.get('xp',0)} XP\n"
     bot.send_message(m.chat.id, text)
 
+
+@bot.message_handler(commands=['addxp'])
+def addxp(m):
+    user_id = m.from_user.id
+    add_xp(user_id, 100)
+    user_data = get_user(user_id)
+    total_xp = user_data.get("xp",0)
+    msg = (
+        f"✨ Yeay! 100 XP adicionados para {m.from_user.first_name}! 💛\n"
+        f"Total agora: {total_xp} XP."
+    )
+    bot.reply_to(m, msg)
+
 # ======================
-# COINS / DAILY / COINFLIP
+# COINS / DAILY / COINFLIP ESTILO HIKARI 🌸✨
 # ======================
+
 @bot.message_handler(commands=['saldo'])
 def saldo(m):
     user_data = get_user(m.from_user.id)
-    bot.reply_to(m, f"💰 Saldo: {user_data.get('coins',0)} coins")
+    coins_amt = user_data.get('coins', 0)
+    msg = f"💛 Olá {m.from_user.first_name}! Seu saldo atual é: **{coins_amt} coins** 🪙\nContinue interagindo para ganhar mais!"
+    bot.reply_to(m, msg, parse_mode="Markdown")
+
 
 @bot.message_handler(commands=['daily'])
 def daily(m):
     user_id = m.from_user.id
     user_data = get_user(user_id)
     now = time.time()
-    cooldown = 86400
+    cooldown = 86400  # 24h
     last = user_data.get("daily_cooldown", 0)
+    
     if now - last < cooldown:
-        bot.reply_to(m,"⏳ Você já coletou hoje.")
+        remaining = int((cooldown - (now - last)) // 3600)
+        bot.reply_to(m, f"⏳ Você já coletou hoje! Volte em ~{remaining}h para pegar de novo.")
         return
-    reward = random.randint(50,150)
+
+    reward = random.randint(75, 200)  # valor mais divertido
     add_coins(user_id, reward)
     users_collection.update_one({"_id": str(user_id)}, {"$set": {"daily_cooldown": now}})
-    bot.reply_to(m,f"💰 Você ganhou {reward} coins!")
+    
+    messages = [
+        f"✨ Yay! Você ganhou {reward} coins hoje! 💛 Continue firme, {m.from_user.first_name}!",
+        f"💖 Moedinhas fresquinhas: {reward} coins! Aproveite seu dia! 🌸",
+        f"🌟 Daily coletado! {m.from_user.first_name}, {reward} coins chegaram para você! 🪙",
+    ]
+    bot.reply_to(m, random.choice(messages))
+
 
 @bot.message_handler(commands=['coinflip'])
 def coinflip(m):
     user_id = m.from_user.id
     user_data = get_user(user_id)
-    if user_data.get("coins",0) < 10:
-        bot.reply_to(m,"🚫 Você precisa de 10 coins")
+    coins_amt = user_data.get('coins', 0)
+    
+    if coins_amt < 10:
+        bot.reply_to(m, "🚫 Ops! Você precisa de pelo menos 10 coins para jogar.")
         return
+
+    # Retira 10 coins
     users_collection.update_one({"_id": str(user_id)}, {"$inc": {"coins": -10}})
-    if random.choice([True, False]):
-        add_coins(user_id, 20)
-        result = "🪙 Cara! Você ganhou 😎👌🏻"
+
+    # Resultado do coinflip
+    win = random.choice([True, False])
+    if win:
+        reward = random.randint(15, 30)
+        add_coins(user_id, reward)
+        result_msg = f"🪙 Cara! Você ganhou {reward} coins 😎👌🏻"
     else:
-        result = "🪙 Coroa! Você perdeu 🫵🏻😆"
+        result_msg = "🪙 Coroa! Você perdeu 🫵🏻😆"
+
     user_data = get_user(user_id)
-    bot.reply_to(m,f"{result}\nSaldo: {user_data.get('coins',0)}")
+    new_balance = user_data.get("coins",0)
+    
+    # Mensagens estilo Hikari
+    messages = [
+        f"{result_msg}\n💛 Saldo atual: {new_balance} coins",
+        f"🎲 Que emoção! {result_msg}\n💖 Agora você tem {new_balance} coins",
+        f"🌸 Coinflip resultado: {result_msg}\n✨ Total de coins: {new_balance}"
+    ]
+    bot.reply_to(m, random.choice(messages))
 
 # ======================
-# WAIFU / GIF / MEME / NSFW / DANBOORU
+# WAIFU / GIF / MEME / NSFW / DANBOORU ESTILO HIKARI 🌸✨ COM RECOMPENSAS
 # ======================
+
+# Função para dar XP/Coins fofinho
+def reward_user(user_id, xp_min=5, xp_max=15, coins_min=5, coins_max=20):
+    xp_gain = random.randint(xp_min, xp_max)
+    coins_gain = random.randint(coins_min, coins_max)
+    add_xp(user_id, xp_gain)
+    add_coins(user_id, coins_gain)
+    return xp_gain, coins_gain
+
 # Waifu SFW
 @bot.message_handler(commands=['waifu'])
 def waifu(m):
     try:
-        bot.send_photo(m.chat.id, waifu_request("sfw"), caption="💛 Uma waifu fofinha pra você!")
+        user_id = m.from_user.id
+        url = waifu_request("sfw")
+        captions = [
+            f"💛 Olha só que fofura, {m.from_user.first_name}! Uma waifu só pra você! 🌸",
+            f"✨ Surpresa kawaii! Aqui vai uma waifu linda pra alegrar seu dia 💖",
+            f"🌟 Um presentinho especial: waifu fresquinha para {m.from_user.first_name}! 🐾"
+        ]
+        bot.send_photo(m.chat.id, url, caption=random.choice(captions))
+        
+        # 💛 Recompensa
+        xp_gain, coins_gain = reward_user(user_id)
+        bot.send_message(m.chat.id, f"💛 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins só por interagir com a waifu! 🌸")
+
     except:
-        bot.reply_to(m, "❌️ Erro ao pegar waifu")
+        bot.reply_to(m, "❌️ Hmmm, não consegui pegar uma waifu agora 😢")
 
 # Waifu GIF
 @bot.message_handler(commands=['waifugif'])
 def waifugif(m):
     try:
-        bot.send_animation(m.chat.id, waifu_request("sfw", gif=True), caption="💛 Waifu GIF fofinha!")
+        user_id = m.from_user.id
+        url = waifu_request("sfw", gif=True)
+        captions = [
+            f"💛 Waifu GIF fofinha pra você! {m.from_user.first_name}, olha que charme! 🌸",
+            f"✨ GIF fresquinho chegando! Que lindinha 😍",
+        ]
+        bot.send_animation(m.chat.id, url, caption=random.choice(captions))
+        
+        xp_gain, coins_gain = reward_user(user_id)
+        bot.send_message(m.chat.id, f"💛 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 🌸")
+
     except:
-        bot.reply_to(m, "❌️ Erro ao pegar GIF")
+        bot.reply_to(m, "❌️ Erro ao pegar GIF fofinho 😢")
 
 # Waifu NSFW
 @bot.message_handler(commands=['waifunsfw'])
 def waifunsfw(m):
     if m.chat.type != "private":
-        bot.reply_to(m,"🚫 NSFW só no privado!")
+        bot.reply_to(m, "🚫 NSFW só no privado! 😉")
         return
     try:
-        bot.send_photo(m.chat.id, waifu_request("nsfw"), caption="🔞 Uma waifu sexy 😏")
-    except:
-        bot.reply_to(m,"❌️ Erro ao pegar NSFW")
+        user_id = m.from_user.id
+        url = waifu_request("nsfw")
+        captions = [
+            f"🔥 Hey {m.from_user.first_name}, uma waifu sexy só pra você 😏",
+            f"🔞 Surpresa safadinha! Curta com moderação 😘"
+        ]
+        bot.send_photo(m.chat.id, url, caption=random.choice(captions))
+        
+        xp_gain, coins_gain = reward_user(user_id, xp_min=10, xp_max=25, coins_min=10, coins_max=30)
+        bot.send_message(m.chat.id, f"🔥 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 😏")
 
-# GIF NSFW
-@bot.message_handler(commands=['gifnsfw'])
-def gifnsfw(m):
-    if m.chat.type != "private":
-        bot.reply_to(m, "🚫 NSFW só no privado!")
-        return
-    try:
-        headers = {"User-Agent": "TelegramBot"}
-        r = requests.get("https://api.redgifs.com/v2/gifs/search?search_text=nsfw&count=50", headers=headers, timeout=10).json()
-        gifs = r.get("gifs", [])
-        if not gifs:
-            bot.reply_to(m, "❌ Nenhum GIF encontrado")
-            return
-        gif = random.choice(gifs)
-        url = gif.get("urls", {}).get("hd") or gif.get("urls", {}).get("sd")
-        if not url:
-            bot.reply_to(m, "❌ Erro ao pegar GIF")
-            return
-        bot.send_animation(m.chat.id, url, caption="🔥 Sexy pra você 😏🔞")
     except:
-        bot.reply_to(m, "❌ Não consegui pegar o GIF agora")
+        bot.reply_to(m, "❌️ Não consegui pegar NSFW agora 😢")
 
 # Meme
 @bot.message_handler(commands=['meme'])
 def meme(m):
     try:
+        user_id = m.from_user.id
         r = requests.get("https://meme-api.com/gimme").json()
-        bot.send_photo(m.chat.id, r["url"], caption=r["title"])
+        captions = [
+            f"🤣 Meme fresquinho pra você, {m.from_user.first_name}!\n{r['title']}",
+            f"🌸 Risadas garantidas! {r['title']}",
+        ]
+        bot.send_photo(m.chat.id, r["url"], caption=random.choice(captions))
+        
+        xp_gain, coins_gain = reward_user(user_id)
+        bot.send_message(m.chat.id, f"💛 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins só por rir um pouco! 😄")
+
     except:
-        bot.reply_to(m,"Erro ao pegar meme")
+        bot.reply_to(m, "❌ Erro ao pegar meme 😢")
 
 # GIF
 @bot.message_handler(commands=['gif'])
 def gif(m):
+    user_id = m.from_user.id
     query = "anime"
     args = m.text.split(maxsplit=1)
     if len(args) > 1:
@@ -429,19 +504,61 @@ def gif(m):
         r = requests.get(url,params=params).json()
         data = r.get("data",[])
         if not data:
-            bot.reply_to(m,"Nenhum gif encontrado")
+            bot.reply_to(m,"❌ Nenhum gif encontrado 😢")
             return
         gif_url = random.choice(data)["images"]["original"]["url"]
-        bot.send_animation(m.chat.id,gif_url)
+        bot.send_animation(m.chat.id,gif_url, caption=f"✨ GIF {query} fresquinho!")
+
+        xp_gain, coins_gain = reward_user(user_id)
+        bot.send_message(m.chat.id, f"💛 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 🌸")
+
     except:
-        bot.reply_to(m,"Erro ao buscar gif")
+        bot.reply_to(m,"❌ Erro ao buscar gif 😢")
+
+# ======================
+# DANBOORU / GIF NSFW COM RECOMPENSAS 🌸✨
+# ======================
+
+# GIF NSFW
+@bot.message_handler(commands=['gifnsfw'])
+def gifnsfw(m):
+    if m.chat.type != "private":
+        bot.reply_to(m, "🚫 NSFW só no privado! 😉")
+        return
+    user_id = m.from_user.id
+    try:
+        headers = {"User-Agent": "TelegramBot"}
+        r = requests.get("https://api.redgifs.com/v2/gifs/search?search_text=nsfw&count=50", headers=headers, timeout=10).json()
+        gifs = r.get("gifs", [])
+        if not gifs:
+            bot.reply_to(m, "❌ Nenhum GIF encontrado 😢")
+            return
+        gif = random.choice(gifs)
+        url = gif.get("urls", {}).get("hd") or gif.get("urls", {}).get("sd")
+        if not url:
+            bot.reply_to(m, "❌ Erro ao pegar GIF 😢")
+            return
+        captions = [
+            f"🔥 Hey {m.from_user.first_name}, um GIF sexy só pra você 😏",
+            f"🔞 Surpresinha safadinha! Curta com moderação 😉"
+        ]
+        bot.send_animation(m.chat.id, url, caption=random.choice(captions))
+        
+        # Recompensa maior por NSFW
+        xp_gain, coins_gain = reward_user(user_id, xp_min=15, xp_max=30, coins_min=15, coins_max=40)
+        bot.send_message(m.chat.id, f"🔥 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 😏")
+
+    except:
+        bot.reply_to(m, "❌ Não consegui pegar o GIF agora 😢")
+
 
 # Danbooru
 @bot.message_handler(commands=['danbooru'])
 def danbooru(m):
     if m.chat.type != "private":
-        bot.reply_to(m,"🚫 NSFW só no privado!")
+        bot.reply_to(m,"🚫 NSFW só no privado! 😉")
         return
+    user_id = m.from_user.id
     args = m.text.split(maxsplit=1)
     if len(args) < 2:
         bot.reply_to(m,"🔞 Use /danbooru termo")
@@ -450,13 +567,22 @@ def danbooru(m):
     try:
         r = requests.get(f"https://danbooru.donmai.us/posts.json?tags={query}&limit=50", timeout=10).json()
         if not r:
-            bot.reply_to(m,"❌️ Nenhum resultado encontrado")
+            bot.reply_to(m,"❌️ Nenhum resultado encontrado 😢")
             return
         post = random.choice(r)
         img_url = post.get("file_url") or post.get("large_file_url")
-        bot.send_photo(m.chat.id, img_url, caption=f"🔞 {query}")
+        captions = [
+            f"🔥 {m.from_user.first_name}, olha que imagem Danbooru pra você 😏",
+            f"🔞 Curta com moderação! {m.from_user.first_name}, aqui está o que você pediu 😉"
+        ]
+        bot.send_photo(m.chat.id, img_url, caption=random.choice(captions))
+        
+        # Recompensa NSFW
+        xp_gain, coins_gain = reward_user(user_id, xp_min=15, xp_max=30, coins_min=15, coins_max=40)
+        bot.send_message(m.chat.id, f"🔥 {m.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins! 😏")
+
     except:
-        bot.reply_to(m,"❌️ Erro ao buscar imagens Danbooru")
+        bot.reply_to(m,"❌️ Erro ao buscar imagens Danbooru 😢")
 
 # ======================
 # GOOGLE / IMAGE / YOUTUBE PLAY
