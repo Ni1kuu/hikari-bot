@@ -116,6 +116,23 @@ def uptime_text():
 # ======================
 @bot.message_handler(commands=['start'])
 def start(m):
+
+    # ===== REGISTRAR USUÁRIO (COLOCA AQUI 🔥) =====
+    try:
+        with open("users.json", "r") as f:
+            users_db = json.load(f)
+    except:
+        users_db = {}
+
+    user_id = str(m.from_user.id)
+
+    if user_id not in users_db:
+        users_db[user_id] = {
+            "first_seen": time.strftime("%d/%m/%Y %H:%M")
+        }
+        with open("users.json", "w") as f:
+            json.dump(users_db, f, indent=4)
+
     video = "https://github.com/Ni1kuu/hikari-bot/raw/main/Cute_anime_fox_girl_standing_in_a_peaceful_Japanese_garden%2C_arms_open_in_a_welcoming_pose.____Animat_seed1530167038.mp4"
     msg_text = f"""
 🌼 Bem-vindo(a) ao {BOT_NAME}! 🌼
@@ -149,14 +166,48 @@ def callback_inline(call):
     cid = call.message.chat.id
 
     if call.data == "perfil":
-        user = call.from_user
-        msg = (
-            f"🌼✨ <b>USERINFO</b> ✨🌼\n\n"
-            f"👤 Nome: {user.first_name}\n"
-            f"💌 Username: @{user.username if user.username else 'Não possui'}\n"
-            f"🆔 ID: {user.id}"
-        )
-        bot.send_message(cid, msg, parse_mode="HTML")
+    user = call.from_user
+    user_id = str(user.id)
+
+    # ===== XP / LEVEL =====
+    user_xp = xp.get(user_id, 0)
+    level = user_xp // 100
+    xp_next = (level + 1) * 100
+
+    # ===== COINS =====
+    saldo = coins.get(user_id, 0)
+
+    # ===== RANK =====
+    ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
+    pos = next((i+1 for i, v in enumerate(ranking) if v[0] == user_id), "—")
+
+    # ===== DATA (users.json) =====
+    try:
+        with open("users.json", "r") as f:
+            users_db = json.load(f)
+    except:
+        users_db = {}
+
+    first_seen = users_db.get(user_id, {}).get("first_seen", "Desconhecido")
+
+    # ===== TEXTO =====
+    msg = f"""
+╭━━━ 👤 PERFIL ━━━╮
+👤 Nome: {user.first_name}
+💌 Username: @{user.username if user.username else 'Não possui'}
+🆔 ID: {user.id}
+
+📅 Desde: {first_seen}
+
+🏆 Level: {level}
+✨ XP: {user_xp}/{xp_next}
+💰 Coins: {saldo}
+
+🥇 Ranking: #{pos}
+╰━━━━━━━━━━━━━━╯
+"""
+
+    bot.send_message(cid, msg, parse_mode="HTML")
 
     elif call.data == "ping":
         start_ping = time.time()
