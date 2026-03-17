@@ -223,39 +223,39 @@ def callback_inline(call):
 # ======================
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith("/"))
 def gain_xp(m):
-    user = str(m.from_user.id)
+    user_id = m.from_user.id
     now = time.time()
-    if user in last_xp and now - last_xp[user] < 10:
+    if user_id in last_xp and now - last_xp[user_id] < 10:
         return
-    last_xp[user] = now
-    xp[user] = xp.get(user, 0) + 5
-    save_data()
+    last_xp[user_id] = now
+    add_xp(user_id, 5)
 
 @bot.message_handler(commands=['level'])
 def level(m):
-    user = str(m.from_user.id)
-    user_xp = xp.get(user, 0)
+    user_id = m.from_user.id
+    user_data = get_user(user_id)
+    user_xp = user_data.get("xp", 0)
     lvl = user_xp // 100
     bot.reply_to(m, f"⭐ {m.from_user.first_name}\nXP: {user_xp}\nLevel: {lvl}")
 
 @bot.message_handler(commands=['addxp'])
 def addxp(m):
-    user = str(m.from_user.id)
-    xp[user] = xp.get(user, 0) + 100
-    save_data()
-    bot.reply_to(m,f"✅ 100 XP adicionados! Total: {xp[user]} XP")
+    user_id = m.from_user.id
+    add_xp(user_id, 100)
+    user_data = get_user(user_id)
+    bot.reply_to(m, f"✅ 100 XP adicionados! Total: {user_data.get('xp',0)} XP")
 
 @bot.message_handler(commands=['rank'])
 def rank(m):
-    ranking = sorted(xp.items(), key=lambda x: x[1], reverse=True)
+    ranking = list(users_collection.find().sort("xp", -1))
     text = "🏆 Ranking\n\n"
-    for i, (user_id, points) in enumerate(ranking[:5], start=1):
+    for i, user_data in enumerate(ranking[:5], start=1):
         try:
-            member = bot.get_chat_member(m.chat.id, int(user_id))
+            member = bot.get_chat_member(m.chat.id, int(user_data["_id"]))
             name = member.user.first_name
         except:
             name = "Usuário"
-        text += f"{i}. {name} - {points} XP\n"
+        text += f"{i}. {name} - {user_data.get('xp',0)} XP\n"
     bot.send_message(m.chat.id, text)
 
 # ======================
@@ -263,38 +263,39 @@ def rank(m):
 # ======================
 @bot.message_handler(commands=['saldo'])
 def saldo(m):
-    user = str(m.from_user.id)
-    bot.reply_to(m, f"💰 Saldo: {coins.get(user,0)} coins")
+    user_data = get_user(m.from_user.id)
+    bot.reply_to(m, f"💰 Saldo: {user_data.get('coins',0)} coins")
 
 @bot.message_handler(commands=['daily'])
 def daily(m):
-    user = str(m.from_user.id)
+    user_id = m.from_user.id
+    user_data = get_user(user_id)
     now = time.time()
     cooldown = 86400
-    last = daily_cooldown.get(user,0)
+    last = user_data.get("daily_cooldown", 0)
     if now - last < cooldown:
         bot.reply_to(m,"⏳ Você já coletou hoje.")
         return
     reward = random.randint(50,150)
-    coins[user] = coins.get(user,0) + reward
-    daily_cooldown[user] = now
-    save_data()
+    add_coins(user_id, reward)
+    users_collection.update_one({"_id": str(user_id)}, {"$set": {"daily_cooldown": now}})
     bot.reply_to(m,f"💰 Você ganhou {reward} coins!")
 
 @bot.message_handler(commands=['coinflip'])
 def coinflip(m):
-    user = str(m.from_user.id)
-    if coins.get(user,0) < 10:
+    user_id = m.from_user.id
+    user_data = get_user(user_id)
+    if user_data.get("coins",0) < 10:
         bot.reply_to(m,"🚫 Você precisa de 10 coins")
         return
-    coins[user] -= 10
-    if random.choice([True,False]):
-        coins[user] += 20
+    users_collection.update_one({"_id": str(user_id)}, {"$inc": {"coins": -10}})
+    if random.choice([True, False]):
+        add_coins(user_id, 20)
         result = "🪙 Cara! Você ganhou 😎👌🏻"
     else:
         result = "🪙 Coroa! Você perdeu 🫵🏻😆"
-    save_data()
-    bot.reply_to(m,f"{result}\nSaldo: {coins[user]}")
+    user_data = get_user(user_id)
+    bot.reply_to(m,f"{result}\nSaldo: {user_data.get('coins',0)}")
 
 # ======================
 # WAIFU / GIF / MEME / NSFW / DANBOORU
