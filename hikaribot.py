@@ -494,36 +494,78 @@ def ship(m):
 # ======================
 @bot.message_handler(commands=['userinfo'])
 def userinfo(m):
-    # Se responder a alguém, pega os dados dessa pessoa
-    if m.reply_to_message:
-        user = m.reply_to_message.from_user
-    else:
-        user = m.from_user
+    user = m.from_user
+    user_id = str(user.id)
 
-    msg = (
-        f"✨️🌼 USERINFO 🌼✨️\n\n"
-        f"Nome: {user.first_name}\n"
-        f"Username: @{user.username if user.username else 'Não possui'}\n"
-        f"ID: {user.id}\n"
-        f"Bot: {user.is_bot}"
-    )
-    bot.send_message(m.chat.id, msg)
+    # Pega os dados do usuário do MongoDB
+    user_data = get_user(user_id)
+
+    xp = user_data.get("xp", 0)
+    coins = user_data.get("coins", 0)
+    first_seen = user_data.get("first_seen", "Desconhecido")
+
+    level = xp // 100
+    xp_next = (level + 1) * 100
+
+    # Ranking
+    ranking = list(users_collection.find().sort("xp", -1))
+    pos = next((i + 1 for i, v in enumerate(ranking) if v["_id"] == user_id), "—")
+
+    msg = f"""
+╭━━━ 👤 PERFIL ━━━╮
+👤 Nome: {user.first_name}
+💌 Username: @{user.username if user.username else 'Não possui'}
+🆔 ID: {user.id}
+
+📅 Desde: {first_seen}
+
+🏆 Level: {level}
+✨ XP: {xp}/{xp_next}
+💰 Coins: {coins}
+
+🥇 Ranking: #{pos}
+╰━━━━━━━━━━━━━━╯
+"""
+    bot.reply_to(m, msg)
 
 # ======================
-# AVATAR
+# AVATAR COMPLETO
 # ======================
 @bot.message_handler(commands=['avatar'])
 def avatar(m):
+    # Define o usuário alvo: se for resposta, pega o usuário respondido, senão o próprio
     if m.reply_to_message:
         user = m.reply_to_message.from_user
     else:
         user = m.from_user
 
+    # Pega as fotos de perfil do usuário
     photos = bot.get_user_profile_photos(user.id)
+
     if photos.total_count > 0:
-        bot.send_photo(m.chat.id, photos.photos[0][-1].file_id)
+        # Seleciona a foto mais recente
+        file_id = photos.photos[0][-1].file_id
+
+        captions = [
+            f"✨ Aqui está a foto de perfil de {user.first_name}! 🌸 Olha só que fofura!",
+            f"🖼 Olha quem apareceu! É o perfil de {user.first_name} 🌟 Muito estiloso(a)!",
+            f"👀 Dê uma olhadinha no perfil de {user.first_name}! 🔥",
+            f"📸 Foto fresquinha de {user.first_name}! Que charme 😎",
+        ]
+        caption = random.choice(captions)
+        bot.send_photo(m.chat.id, file_id, caption=caption)
+
     else:
-        bot.reply_to(m, "❌️ Usuário sem foto de perfil")
+        # Se não tiver foto, mostra a foto do bot ou grupo
+        try:
+            bot_photo = bot.get_user_profile_photos(bot.get_me().id)
+            if bot_photo.total_count > 0:
+                file_id = bot_photo.photos[0][-1].file_id
+                bot.send_photo(m.chat.id, file_id, caption="😅 Este usuário não tem foto, mas olha a minha!")
+            else:
+                bot.reply_to(m, "❌️ Usuário sem foto de perfil e eu também não tenho 😭")
+        except:
+            bot.reply_to(m, "❌️ Usuário sem foto de perfil e não consegui pegar a minha 😭")
 
 # ======================
 # PIN / UNPIN MENSAGEM
