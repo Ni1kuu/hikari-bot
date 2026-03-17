@@ -67,7 +67,7 @@ start_time = time.time()
 # ======================
 MENU = f"""
 ╭━━━ 🌼 {BOT_NAME} BOT 🌼 ━━━╮
-╭─ 🌸 Usuários ─╮
+╭─ 🏵 Usuários ─╮
 👤 /userinfo - Info de usuário
 🧩 /level - Seu nível
 🏆 /rank - Ranking XP
@@ -75,7 +75,7 @@ MENU = f"""
 🎲 /dado - Jogar dado
 💛 /ship - Shipar alguém (responder)
 ╰─────────────╯
-╭─ 🌸 Diversão ─╮
+╭─ 🏵 Diversão ─╮
 🖼 /waifu - Waifu imagem
 🔞 /waifunsfw - Waifu NSFW
 🤣 /meme - Meme aleatório
@@ -84,12 +84,13 @@ MENU = f"""
 🖼 /image <termo> - Buscar imagem
 🪙 /coinflip - Jogo de coinflip
 ╰─────────────╯
-╭─ 🌸 Sistema ─╮
+╭─ 🏵 Sistema ─╮
 🏓 /ping - Ping do bot
 📌 /pin - Fixar mensagem
-📌 /unpin - Desfixar mensagem
+🔓 /unpin - Desfixar mensagem
+🗑 /unpinall - Desfixar tudo
 ╰─────────────╯
-╭─ 🌸 Moderação ─╮
+╭─ 🏵 Moderação ─╮
 🚫 /ban - Banir (responder)
 ⚠️ /warn - Avisar (responder)
 🔇 /mute - Mutar (responder)
