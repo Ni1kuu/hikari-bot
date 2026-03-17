@@ -128,7 +128,7 @@ def start(m):
 🌼 Bem-vindo(a) ao {BOT_NAME}! 🌼
 ✨ Aqui você pode se divertir, explorar e interagir comigo!
 💌 Clique em um botão abaixo:
-Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹ 💖
+Divirta-se e aproveite! ꒰ᐢ. .ᐢ꒱₊˚⊹💛
 """.strip()
 
     keyboard = types.InlineKeyboardMarkup(row_width=2)
@@ -217,19 +217,16 @@ def callback_inline(call):
     if call.data == "perfil":
         user = call.from_user
         user_id = str(user.id)
-
         user_data = get_user(user.id)
 
         xp = user_data.get("xp", 0)
         coins = user_data.get("coins", 0)
-
         level = xp // 100
         xp_next = (level + 1) * 100
 
         ranking = list(users_collection.find().sort("xp", -1))
         pos = next((i+1 for i, v in enumerate(ranking) if v["_id"] == user_id), "—")
 
-        # Converte a data do MongoDB para o formato DD.MM.YY HH:MM
         first_seen_raw = user_data.get("first_seen", None)
         if first_seen_raw:
             try:
@@ -264,35 +261,37 @@ def callback_inline(call):
         bot.edit_message_text(f"🏓 Pong! {elapsed} ms", cid, msg_ping.message_id)
 
     elif call.data == "waifu":
-    try:
-        user_id = call.from_user.id
-        url = waifu_request("sfw")  # pega a waifu
-        captions = [
-            f"💛 Olha só que fofura, {call.from_user.first_name}! Uma waifu só pra você! 🌸",
-            f"✨ Surpresa kawaii! Aqui vai uma waifu linda pra alegrar seu dia 💖",
-            f"🌟 Um presentinho especial: waifu fresquinha para {call.from_user.first_name}! 🐾"
-        ]
-        bot.send_photo(cid, url, caption=random.choice(captions))
+        try:
+            user_id = call.from_user.id
+            url = waifu_request("sfw")  # pega a waifu
+            captions = [
+                f"💛 Olha só que fofura, {call.from_user.first_name}! Uma waifu só pra você! 🌸",
+                f"✨ Surpresa kawaii! Aqui vai uma waifu linda pra alegrar seu dia 💖",
+                f"🌟 Um presentinho especial: waifu fresquinha para {call.from_user.first_name}! 🐾"
+            ]
+            bot.send_photo(cid, url, caption=random.choice(captions))
 
-        # 💛 Recompensa Hikari Style
-        xp_gain = random.randint(5,15)
-        coins_gain = random.randint(5,20)
-        add_xp(user_id, xp_gain)
-        add_coins(user_id, coins_gain)
-        bot.send_message(cid, f"💛 {call.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins só por interagir com a waifu! 🌸")
+            xp_gain = random.randint(5, 15)
+            coins_gain = random.randint(5, 20)
+            add_xp(user_id, xp_gain)
+            add_coins(user_id, coins_gain)
+            bot.send_message(cid, f"💛 {call.from_user.first_name} ganhou {xp_gain} XP e {coins_gain} coins só por interagir com a waifu! 🌸")
 
-    except Exception as e:
-        bot.send_message(cid, f"❌️ Hmmm, não consegui pegar uma waifu agora 😢\n{e}")
+        except Exception as e:
+            bot.send_message(cid, f"❌️ Hmmm, não consegui pegar uma waifu agora 😢\n{e}")
 
     elif call.data == "info":
-    msg = (
-        f"🌸 **{BOT_NAME} Info** 🌸\n\n"
-        f"⏱️ Uptime: {uptime_text()}\n"
-        f"🛠️ Versão: {BOT_VERSION}\n"
-        f"👤 Criador: {CREATOR}\n"
-        f"💖 Divirta-se e interaja comigo!"
-    )
-    bot.send_message(cid, msg, parse_mode="Markdown")
+        try:
+            msg = (
+                f"🌼 **{BOT_NAME} Info** 🌼\n\n"
+                f"⏱️ Uptime: {uptime_text()}\n"
+                f"🛠️ Versão: {BOT_VERSION}\n"
+                f"👤 Criador: {CREATOR}\n"
+                f"💖 Divirta-se e interaja comigo!"
+            )
+            bot.send_message(cid, msg, parse_mode="Markdown")
+        except Exception as e:
+            bot.send_message(cid, f"❌ Não consegui mostrar info 😢\n{e}")
 
     elif call.data == "menu_completo":
         bot.send_message(cid, MENU)
