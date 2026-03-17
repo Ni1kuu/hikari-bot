@@ -34,6 +34,16 @@ xp = {}
 coins = {}
 daily_cooldown = {}
 
+# cria o arquivo automaticamente se não existir
+if not os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "w") as f:
+        json.dump({
+            "xp": {},
+            "coins": {},
+            "daily_cooldown": {}
+        }, f, indent=4)
+
+# carrega os dados com segurança
 try:
     with open(DATA_FILE, "r") as f:
         data = json.load(f)
@@ -41,15 +51,27 @@ try:
         coins = data.get("coins", {})
         daily_cooldown = data.get("daily_cooldown", {})
 except:
-    pass
+    # se der erro (JSON corrompido), recria tudo
+    xp = {}
+    coins = {}
+    daily_cooldown = {}
+    with open(DATA_FILE, "w") as f:
+        json.dump({
+            "xp": xp,
+            "coins": coins,
+            "daily_cooldown": daily_cooldown
+        }, f, indent=4)
 
+# ======================
+# SALVAR DADOS
+# ======================
 def save_data():
     with open(DATA_FILE, "w") as f:
         json.dump({
             "xp": xp,
             "coins": coins,
             "daily_cooldown": daily_cooldown
-        }, f)
+        }, f, indent=4)
 
 start_time = time.time()
 
